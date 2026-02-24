@@ -12,7 +12,6 @@ function doPost(e) {
   return jsonResponse(false, null, "endpoint_not_found");
 }
 
-// perubahan ada disini
 
 function doGet(e) {
   const path = e.parameter.path || "";
