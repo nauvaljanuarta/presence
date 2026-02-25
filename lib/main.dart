@@ -5,7 +5,10 @@ import 'package:presence/features/presence/presentation/screens/qr_scan_screen.d
 import 'package:presence/features/accel/presentation/screens/accel_screen.dart';
 import 'package:presence/features/gps/presentation/screens/map_screen.dart';
 
-void main() {
+void main() async {
+  // WAJIB sebelum pakai plugin (Maps, GPS, Camera, SharedPreferences)
+  WidgetsFlutterBinding.ensureInitialized();
+
   runApp(const ProviderScope(child: CloudPraktikumApp()));
 }
 
@@ -33,11 +36,11 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _currentIndex = 0;
 
-  final _screens = const [
-    QrScanScreen(),
-    AccelScreen(),
-    MapScreen(),
-  ];
+  List<Widget> get _screens => const [
+        QrScanScreen(),
+        AccelScreen(),
+        MapScreen(),
+      ];
 
   @override
   Widget build(BuildContext context) {

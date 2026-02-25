@@ -14,17 +14,21 @@ class MapScreen extends ConsumerStatefulWidget {
 class _MapScreenState extends ConsumerState<MapScreen> {
   GoogleMapController? _mapController;
   static const _defaultPosition = LatLng(-7.2575, 112.7521);
+  bool _mapError = false;
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback(
-      (_) => ref.read(gpsProvider.notifier).loadMapData(),
-    );
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        ref.read(gpsProvider.notifier).loadMapData();
+      }
+    });
   }
 
   @override
   void dispose() {
+    _mapController?.dispose();
     ref.read(gpsProvider.notifier).stopTracking();
     super.dispose();
   }
@@ -72,8 +76,11 @@ class _MapScreenState extends ConsumerState<MapScreen> {
           if (state.isSyncing)
             const Padding(
               padding: EdgeInsets.all(12),
-              child: SizedBox(width: 20, height: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)),
+              child: SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+              ),
             ),
           IconButton(
             icon: const Icon(Icons.refresh),
@@ -83,14 +90,38 @@ class _MapScreenState extends ConsumerState<MapScreen> {
       ),
       body: Stack(
         children: [
-          GoogleMap(
-            onMapCreated: (ctrl) => _mapController = ctrl,
-            initialCameraPosition: const CameraPosition(target: _defaultPosition, zoom: 15),
-            markers: _buildMarkers(state),
-            polylines: _buildPolylines(state),
-            myLocationEnabled: true,
-            myLocationButtonEnabled: true,
-          ),
+          // Tampilkan error jika Maps gagal load
+          if (_mapError)
+            Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.map_outlined, size: 64, color: Colors.grey),
+                  const SizedBox(height: 16),
+                  const Text('Google Maps gagal dimuat.',
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 8),
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 32),
+                    child: Text(
+                      'Pastikan Google Maps API Key sudah diisi di AndroidManifest.xml',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: Colors.grey),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: () => setState(() => _mapError = false),
+                    child: const Text('Coba Lagi'),
+                  ),
+                ],
+              ),
+            )
+          else
+            // Google Map dengan error handling
+            _buildMap(state),
+
+          // Info koordinat GPS
           Positioned(
             top: 10, left: 10, right: 10,
             child: Card(
@@ -98,8 +129,10 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                 child: Row(
                   children: [
-                    Icon(state.isTracking ? Icons.location_on : Icons.location_off,
-                        color: state.isTracking ? Colors.green : Colors.grey),
+                    Icon(
+                      state.isTracking ? Icons.location_on : Icons.location_off,
+                      color: state.isTracking ? Colors.green : Colors.grey,
+                    ),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
@@ -117,6 +150,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
               ),
             ),
           ),
+
           if (state.error != null)
             Positioned(
               bottom: 80, left: 10, right: 10,
@@ -124,7 +158,8 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                 color: Colors.red.shade50,
                 child: Padding(
                   padding: const EdgeInsets.all(10),
-                  child: Text('\u26a0 \${state.error}', style: const TextStyle(color: Colors.red)),
+                  child: Text('\u26a0 \${state.error}',
+                      style: const TextStyle(color: Colors.red)),
                 ),
               ),
             ),
@@ -143,5 +178,24 @@ class _MapScreenState extends ConsumerState<MapScreen> {
         backgroundColor: state.isTracking ? Colors.red : Colors.blue,
       ),
     );
+  }
+
+  Widget _buildMap(GpsState state) {
+    try {
+      return GoogleMap(
+        onMapCreated: (ctrl) => _mapController = ctrl,
+        initialCameraPosition: const CameraPosition(target: _defaultPosition, zoom: 15),
+        markers: _buildMarkers(state),
+        polylines: _buildPolylines(state),
+        myLocationEnabled: true,
+        myLocationButtonEnabled: true,
+        onCameraIdle: () {},
+      );
+    } catch (e) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) setState(() => _mapError = true);
+      });
+      return const SizedBox.shrink();
+    }
   }
 }
