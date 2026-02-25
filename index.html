@@ -4,7 +4,177 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dashboard Presensi - Cloud Computing</title>
-  <link rel="stylesheet" href="style.css">
+  
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      background-color: #f4f7f6;
+      color: #333;
+    }
+
+    header {
+      background-color: #0056b3;
+      color: white;
+      padding: 1.5rem 2rem;
+      text-align: center;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+
+    header p {
+      margin-top: 0.5rem;
+      opacity: 0.8;
+    }
+
+    .container {
+      display: flex;
+      max-width: 1200px;
+      margin: 2rem auto;
+      gap: 2rem;
+      padding: 0 1rem;
+    }
+
+    .qr-section, .list-section {
+      flex: 1;
+    }
+
+    .card {
+      background: white;
+      border-radius: 10px;
+      padding: 2rem;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+      height: 100%;
+    }
+
+    .card h2 {
+      margin-bottom: 0.5rem;
+      color: #2c3e50;
+    }
+
+    .subtitle {
+      color: #7f8c8d;
+      margin-bottom: 1.5rem;
+      font-size: 0.9rem;
+    }
+
+    .qr-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 2rem;
+      background-color: #f8f9fa;
+      border: 2px dashed #ccc;
+      border-radius: 10px;
+      margin-bottom: 1rem;
+    }
+
+    .qr-container img {
+      max-width: 100%;
+      height: auto;
+    }
+
+    .timer {
+      text-align: center;
+      font-weight: bold;
+      color: #e74c3c;
+      font-size: 1.1rem;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 1rem;
+      border-bottom: 2px solid #eee;
+      margin-bottom: 1.5rem;
+      padding-bottom: 0.5rem;
+    }
+
+    .tab {
+      font-size: 1.2rem;
+      cursor: pointer;
+      color: #7f8c8d;
+    }
+
+    .tab.active {
+      color: #0056b3;
+      border-bottom: 3px solid #0056b3;
+      padding-bottom: 0.4rem;
+    }
+
+    .badge {
+      display: inline-block;
+      background-color: #e74c3c;
+      color: white;
+      padding: 0.2rem 0.6rem;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      vertical-align: middle;
+    }
+
+    .badge.success {
+      background-color: #2ecc71;
+    }
+
+    .student-list {
+      list-style: none;
+    }
+
+    .list-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem;
+      border-bottom: 1px solid #eee;
+      transition: background-color 0.2s;
+    }
+
+    .list-item:hover {
+      background-color: #f8f9fa;
+    }
+
+    .student-info {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .student-id {
+      font-size: 0.8rem;
+      color: #7f8c8d;
+    }
+
+    .student-name {
+      font-weight: bold;
+      font-size: 1.05rem;
+    }
+
+    .status-badge {
+      padding: 0.4rem 0.8rem;
+      border-radius: 5px;
+      font-size: 0.85rem;
+      font-weight: bold;
+    }
+
+    .status-badge.pending {
+      background-color: #fff3cd;
+      color: #856404;
+    }
+
+    .status-badge.success {
+      background-color: #d4edda;
+      color: #155724;
+    }
+
+    /* Responsif untuk layar kecil */
+    @media (max-width: 768px) {
+      .container {
+        flex-direction: column;
+      }
+    }
+  </style>
 </head>
 <body>
   <header>
@@ -52,6 +222,158 @@
     </section>
   </main>
   
-  <script src="script.js"></script>
+  <script>
+    // URL Web App Google Apps Script Anda
+    const API_URL = "https://script.google.com/macros/s/AKfycbwRWRN2Nn3vvDzWNO8IYinc449oZcnyCCC3NJmzqTX0gSnOyFpEzo4Giap3nYEwg39M4g/exec"; 
+
+    // Ambil elemen dari DOM (HTML)
+    const qrImage = document.getElementById('qr-image');
+    const timeLeftSpan = document.getElementById('time-left');
+    const listBelum = document.getElementById('list-belum');
+    const listSudah = document.getElementById('list-sudah');
+    const countBelum = document.getElementById('count-belum');
+    const countSudah = document.getElementById('count-sudah');
+
+    // Daftar data mahasiswa statis
+    const students = [
+      { id: "101123001", name: "Ahmad Budi" },
+      { id: "101123002", name: "Siti Aminah" },
+      { id: "101123003", name: "Fajar Pratama" }
+    ];
+
+    let qrInterval;
+
+    // 1. Fungsi Generate Token & Tampilkan QR Code
+    async function generateQR() {
+      // Ambil nilai terbaru dari inputan HTML
+      const currentCourseId = document.getElementById('input-course').value;
+      const currentSessionId = document.getElementById('input-session').value;
+
+      try {
+        const fetchUrl = `${API_URL}?path=presence/qr/generate`;
+        
+        const response = await fetch(fetchUrl, {
+          method: "POST",
+          redirect: "follow",
+          body: JSON.stringify({
+            course_id: currentCourseId,
+            session_id: currentSessionId,
+            timestamp: new Date().toISOString()
+          }),
+          headers: { "Content-Type": "text/plain;charset=utf-8" }
+        });
+        
+        const result = await response.json();
+        
+        if (result.ok) {
+          const token = result.data.qr_token;
+          qrImage.src = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${token}`;
+          startTimer(30); 
+        }
+      } catch (error) {
+        console.error("Gagal generate QR:", error);
+      }
+    }
+
+    // 2. Fungsi Hitung Mundur (Timer)
+    function startTimer(seconds) {
+      clearInterval(qrInterval);
+      let timeLeft = seconds;
+      timeLeftSpan.innerText = timeLeft;
+
+      qrInterval = setInterval(() => {
+        timeLeft--;
+        timeLeftSpan.innerText = timeLeft;
+        
+        if (timeLeft <= 0) {
+          clearInterval(qrInterval);
+          generateQR(); // Otomatis generate QR baru saat waktu habis
+        }
+      }, 1000);
+    }
+
+    // 3. Fungsi Polling: Cek Status Mahasiswa ke Backend
+    async function checkStudentStatus() {
+      // Ambil nilai terbaru dari inputan HTML
+      const currentCourseId = document.getElementById('input-course').value;
+      const currentSessionId = document.getElementById('input-session').value;
+
+      let htmlBelum = "";
+      let htmlSudah = "";
+      let totalBelum = 0;
+      let totalSudah = 0;
+      let isApiError = false;
+
+      for (const student of students) {
+        try {
+          const response = await fetch(`${API_URL}?path=presence/status&user_id=${student.id}&course_id=${currentCourseId}&session_id=${currentSessionId}`);
+          if (!response.ok) throw new Error("Network response was not ok");
+          
+          const result = await response.json();
+          const isCheckedIn = result.ok && result.data.status === "checked_in";
+          
+          const listItem = `
+            <li class="list-item">
+              <div class="student-info">
+                <span class="student-id">${student.id}</span>
+                <span class="student-name">${student.name}</span>
+              </div>
+              <span class="status-badge ${isCheckedIn ? 'success' : 'pending'}">
+                ${isCheckedIn ? 'Hadir' : 'Belum'}
+              </span>
+            </li>
+          `;
+
+          if (isCheckedIn) {
+            htmlSudah += listItem;
+            totalSudah++;
+          } else {
+            htmlBelum += listItem;
+            totalBelum++;
+          }
+        } catch (error) {
+          console.error(`Gagal cek status ${student.name}:`, error);
+          isApiError = true;
+        }
+      }
+
+      if (!isApiError) {
+        listBelum.innerHTML = htmlBelum;
+        listSudah.innerHTML = htmlSudah;
+        countBelum.innerText = totalBelum;
+        countSudah.innerText = totalSudah;
+      }
+    }
+
+    // 4. Tab Navigasi Sederhana
+    document.querySelectorAll('.tab').forEach((tab, index) => {
+      tab.addEventListener('click', () => {
+        // Reset tab active
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        
+        // Sembunyikan/Tampilkan list sesuai tab yang diklik
+        if(index === 0) {
+          listBelum.style.display = 'block';
+          listSudah.style.display = 'none';
+        } else {
+          listBelum.style.display = 'none';
+          listSudah.style.display = 'block';
+        }
+      });
+    });
+
+    // Inisialisasi saat halaman web pertama kali dimuat
+    window.onload = () => {
+      // Sembunyikan list "Sudah Absen" secara default
+      listSudah.style.display = 'none';
+      
+      generateQR();
+      checkStudentStatus();
+      
+      // Lakukan polling otomatis (cek absensi) setiap 5 detik
+      setInterval(checkStudentStatus, 5000);
+    };
+  </script>
 </body>
 </html>
