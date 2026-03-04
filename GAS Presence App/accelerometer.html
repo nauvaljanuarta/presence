@@ -30,7 +30,7 @@
 
     <div class="card">
         <h3>1. Konfigurasi Device</h3>
-        <input type="text" id="device-id" value="HP-MAHASISWA-01" placeholder="Masukkan ID Device">
+        <input type="text" id="device-id" value="HP-MAHASISWA-01" plac eholder="Masukkan ID Device">
         
         <button onclick="requestSensorPermission()" class="btn-warning" id="btn-permission">
             ⚠️ Klik Ini Dulu (Wajib untuk iPhone/iOS)
@@ -127,13 +127,10 @@
     async function sendData() {
         const deviceId = document.getElementById('device-id').value;
         
-        // Kita ambil "snapshot" data sensor saat ini
-        // Kita kirim 1 data saja per request agar ringan, atau bisa array
-        // Di sini saya kirim array berisi 1 sample (sesuai format batch sebelumnya)
-        
+        // Data payload
         const payload = {
             device_id: deviceId,
-            ts: new Date().toISOString(), // Waktu kirim
+            ts: new Date().toISOString(),
             samples: [
                 {
                     t: new Date().toISOString(),
@@ -145,24 +142,28 @@
         };
 
         try {
+            // PASTIKAN API_URL SUDAH UPDATE DENGAN YANG BARU (/exec)
             const response = await fetch(`${API_URL}?path=telemetry/accel`, {
                 method: "POST",
                 redirect: "follow",
-                headers: { "Content-Type": "text/plain;charset=utf-8" },
+                // RAHELIA (RAHASIA): Gunakan text/plain agar browser tidak memblokir (CORS Friendly)
+                headers: { "Content-Type": "text/plain;charset=utf-8" }, 
                 body: JSON.stringify(payload)
             });
             
             const result = await response.json();
+            
             if(result.ok) {
                 log(`Terkirim: X=${currentMotion.x}, Y=${currentMotion.y}, Z=${currentMotion.z}`);
             } else {
                 log("Gagal: " + result.error);
             }
         } catch (e) {
-            log("Error Jaringan (CORS/Sinyal)");
+            console.error(e);
+            log("Error Jaringan (Cek koneksi / Izin Script)");
         }
     }
-
+    
     function toggleSending() {
         const btnStart = document.getElementById('btn-start');
         const btnStop = document.getElementById('btn-stop');
