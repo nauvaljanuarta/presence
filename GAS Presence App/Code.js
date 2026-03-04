@@ -204,3 +204,36 @@ function checkStatus(params) {
     status: "not_checked_in"
   });
 }
+
+function postAccel(body) {
+  const { device_id, ts, samples } = body;
+
+  if (!device_id)
+    return jsonResponse(false, null, "missing_field: device_id");
+
+  if (!samples || !Array.isArray(samples))
+    return jsonResponse(false, null, "missing_field: samples");
+
+  const sheet = SpreadsheetApp
+    .openById(spreadsheet_id)
+    .getSheetByName(accel);
+
+  const serverTs = new Date().toISOString();
+  let accepted = 0;
+
+  samples.forEach(sample => {
+    if (sample.t && sample.x != null && sample.y != null && sample.z != null) {
+      sheet.appendRow([
+        device_id,
+        sample.t,
+        sample.x,
+        sample.y,
+        sample.z,
+        serverTs
+      ]);
+      accepted++;
+    }
+  });
+
+  return jsonResponse(true, { accepted });
+}
