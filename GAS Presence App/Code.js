@@ -8,6 +8,7 @@ function doPost(e) {
 
   if (path === "presence/qr/generate") return generateQR(body);
   if (path === "presence/checkin") return checkIn(body);
+  if (path === "telemetry/accel") return postAccel(body);
 
   return jsonResponse(false, null, "endpoint_not_found");
 }
@@ -16,10 +17,9 @@ function doGet(e) {
   const path = e.parameter.path || "";
   const page = e.parameter.page || "";
 
+  // presence
   if (path === "presence/status") return checkStatus(e.parameter);
 
-
-  // Routing halaman: ?page=scan untuk client scanner
   if (page === "scan") {
     return HtmlService
       .createHtmlOutputFromFile("scan")
@@ -27,12 +27,14 @@ function doGet(e) {
       .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
   }
 
-  // Default: dashboard admin
   if (!path) {
     return HtmlService
       .createHtmlOutputFromFile("index")
       .setTitle("Presence System");
   }
+  // accelerometry
+  if (path === "telemetry/accel/latest") return getLatestAccel(e.parameter);
+
   return jsonResponse(false, null, "endpoint_not_found");
 }
 
@@ -203,6 +205,32 @@ function checkStatus(params) {
     session_id,
     status: "not_checked_in"
   });
+}
+
+function getLatestAccel(params) {
+  const { device_id } = params;
+
+  if (!device_id)
+    return jsonResponse(false, null, "missing_field: device_id");
+
+  const sheet = SpreadsheetApp
+    .openById(spreadsheet_id)
+    .getSheetByName(accel);
+
+  const data = sheet.getDataRange().getValues();
+
+  for (let i = data.length - 1; i > 0; i--) {
+    if (String(data[i][0]).trim() === String(device_id).trim()) {
+      return jsonResponse(true, {
+        t: data[i][1],
+        x: data[i][2],
+        y: data[i][3],
+        z: data[i][4]
+      });
+    }
+  }
+
+  return jsonResponse(false, null, "device_not_found");
 }
 
 function postAccel(body) {
