@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Dashboard Presensi - Cloud Computing (Firebase)</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f4f7f6;
+            color: #333;
+        }
+
+        header {
+            background-color: #0056b3;
+            color: white;
+            padding: 1.5rem 2rem;
+            text-align: center;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        header p {
+            margin-top: 0.5rem;
+            opacity: 0.8;
+        }
+
+        .badge {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            margin-top: 0.5rem;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 3rem auto;
+            padding: 0 1rem;
+        }
+
+        .card {
+            background: white;
+            border-radius: 10px;
+            padding: 2rem;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+        }
+
+        .card h2 {
+            margin-bottom: 1rem;
+            color: #2c3e50;
+            text-align: center;
+        }
+
+        .input-section {
+            background: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: 8px;
+            border: 1px solid #eee;
+            margin-bottom: 1.5rem;
+        }
+
+        .input-section label {
+            display: block;
+            font-size: 0.9rem;
+            color: #555;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .input-section input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 1rem;
+            box-sizing: border-box;
+        }
+
+        .btn-generate {
+            width: 100%;
+            padding: 12px;
+            background: #0056b3;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 1rem;
+            transition: background 0.3s;
+        }
+
+        .btn-generate:hover {
+            background: #004494;
+        }
+
+        .subtitle {
+            color: #7f8c8d;
+            margin-bottom: 1rem;
+            font-size: 0.95rem;
+            text-align: center;
+        }
+
+        .qr-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem;
+            background-color: #f8f9fa;
+            border: 2px dashed #ccc;
+            border-radius: 10px;
+            margin-bottom: 1rem;
+        }
+
+        .qr-container img {
+            max-width: 100%;
+            height: auto;
+        }
+
+        .timer {
+            text-align: center;
+            font-weight: bold;
+            color: #e74c3c;
+            font-size: 1.2rem;
+        }
+
+        #qr-display-area {
+            display: none;
+            margin-top: 2rem;
+            border-top: 2px solid #eee;
+            padding-top: 1.5rem;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1>Dashboard Presensi Mahasiswa</h1>
+        <p>Mata Kuliah: Cloud Computing</p>
+        <span class="badge">🔥 Firebase Version</span>
+    </header>
+
+    <main class="container">
+        <div class="card">
+            <h2>Mulai Sesi Presensi</h2>
+
+            <div class="input-section">
+                <label>ID Mata Kuliah:</label>
+                <input type="text" id="input-course" placeholder="Contoh: CC-101">
+
+                <label>ID Sesi:</label>
+                <input type="text" id="input-session" placeholder="Contoh: SES-01">
+
+                <button class="btn-generate" id="btn-start">Terapkan & Generate QR</button>
+            </div>
+
+            <div id="qr-display-area">
+                <p class="subtitle">Buka aplikasi presensi Anda dan scan QR di bawah ini.</p>
+
+                <div class="qr-container">
+                    <img src="" alt="QR Code Presensi" id="qr-image">
+                </div>
+
+                <p class="timer">Berlaku selama: <span id="time-left">30</span> detik</p>
+            </div>
+
+        </div>
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const baseUrl = window.location.origin + "/api";
+            const qrImage = document.getElementById('qr-image');
+            const timeLeftSpan = document.getElementById('time-left');
+            const qrDisplayArea = document.getElementById('qr-display-area');
+            const btnStart = document.getElementById('btn-start');
+
+            let qrInterval;
+
+            btnStart.addEventListener('click', startSession);
+
+            function startSession() {
+                const courseId = document.getElementById('input-course').value.trim();
+                const sessionId = document.getElementById('input-session').value.trim();
+
+                if (!courseId || !sessionId) {
+                    alert("Harap isi ID Mata Kuliah dan ID Sesi terlebih dahulu!");
+                    return;
+                }
+
+                qrDisplayArea.style.display = 'block';
+                qrImage.src = "https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=Loading...";
+                btnStart.disabled = true;
+                btnStart.innerText = "Generating...";
+                generateQR(courseId, sessionId);
+            }
+
+            async function generateQR(courseId, sessionId) {
+                try {
+                    const res = await fetch(baseUrl + "/presence/qr/generate", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            course_id: courseId,
+                            session_id: sessionId,
+                            timestamp: new Date().toISOString()
+                        })
+                    });
+
+                    const result = await res.json();
+
+                    btnStart.disabled = false;
+                    btnStart.innerText = "Terapkan & Generate QR";
+
+                    if (result.ok) {
+                        const token = result.data.qr_token;
+                        qrImage.src = "https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=" + token;
+                        startTimer(30);
+                    } else {
+                        console.error("Server error:", result.error);
+                        alert("Error: " + result.error);
+                    }
+                } catch (err) {
+                    btnStart.disabled = false;
+                    btnStart.innerText = "Terapkan & Generate QR";
+                    console.error("Gagal generate QR:", err);
+                    alert("Gagal generate QR: " + err.message);
+                }
+            }
+
+            function startTimer(seconds) {
+                clearInterval(qrInterval);
+                let timeLeft = seconds;
+                timeLeftSpan.innerText = timeLeft;
+
+                const courseId = document.getElementById('input-course').value.trim();
+                const sessionId = document.getElementById('input-session').value.trim();
+
+                qrInterval = setInterval(function () {
+                    timeLeft--;
+                    timeLeftSpan.innerText = timeLeft;
+
+                    if (timeLeft <= 0) {
+                        clearInterval(qrInterval);
+                        generateQR(courseId, sessionId);
+                    }
+                }, 1000);
+            }
+        });
+    </script>
+</body>
+
+</html>

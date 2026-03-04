@@ -138,9 +138,9 @@ function checkIn(body) {
 
   for (let i = 1; i < presences.length; i++) {
     if (
-      presences[i][1] === user_id &&
-      presences[i][3] === course_id &&
-      presences[i][4] === session_id
+      presences[i][2] === user_id &&
+      presences[i][4] === course_id &&
+      presences[i][1] === session_id
     ) {
       return jsonResponse(false, null, "already_checked_in");
     }
@@ -150,10 +150,10 @@ function checkIn(body) {
 
   presenceSheet.appendRow([
     presenceId,
+    session_id,
     user_id,
     device_id,
     course_id,
-    session_id,
     qr_token,
     timestamp
   ]);
@@ -178,9 +178,9 @@ function checkStatus(params) {
   const data = sheet.getDataRange().getValues();
 
   for (let i = 1; i < data.length; i++) {
-    const rowUser = String(data[i][1]).trim();
-    const rowCourse = String(data[i][3]).trim();
-    const rowSession = String(data[i][4]).trim();
+    const rowUser = String(data[i][2]).trim();
+    const rowCourse = String(data[i][4]).trim();
+    const rowSession = String(data[i][1]).trim();
 
     if (
       rowUser === String(user_id).trim() &&
