@@ -1,6 +1,7 @@
 const spreadsheet_id = "1XVkpUBCZ3tWWuiY6o7zE_2R7tKUSSBfAXYweBjtWdes";
 const tokens = "tokens";
 const presence = "presence";
+const accelerometer = "accelerometer";
 
 function doPost(e) {
   const path = e.parameter.path || "";
@@ -207,6 +208,7 @@ function checkStatus(params) {
   });
 }
 
+// accelerometer
 function getLatestAccel(params) {
   const { device_id } = params;
 
@@ -215,7 +217,7 @@ function getLatestAccel(params) {
 
   const sheet = SpreadsheetApp
     .openById(spreadsheet_id)
-    .getSheetByName(accel);
+    .getSheetByName(accelerometer);
 
   const data = sheet.getDataRange().getValues();
 
@@ -234,7 +236,7 @@ function getLatestAccel(params) {
 }
 
 function postAccel(body) {
-  const { device_id, ts, samples } = body;
+  const { device_id, samples } = body;
 
   if (!device_id)
     return jsonResponse(false, null, "missing_field: device_id");
@@ -244,9 +246,9 @@ function postAccel(body) {
 
   const sheet = SpreadsheetApp
     .openById(spreadsheet_id)
-    .getSheetByName(accel);
+    .getSheetByName(accelerometer);
 
-  const serverTs = new Date().toISOString();
+  const timestamp = new Date().toISOString();
   let accepted = 0;
 
   samples.forEach(sample => {
@@ -257,7 +259,7 @@ function postAccel(body) {
         sample.x,
         sample.y,
         sample.z,
-        serverTs
+        timestamp
       ]);
       accepted++;
     }

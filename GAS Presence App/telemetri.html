@@ -1,189 +1,260 @@
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Telemetri Sensor HP Asli</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        :root { --primary: #2563eb; --success: #16a34a; --bg: #f8fafc; }
-        body { font-family: sans-serif; background: var(--bg); padding: 20px; color: #333; }
-        .container { max-width: 600px; margin: 0 auto; }
-        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 20px; }
-        input, button { width: 100%; padding: 12px; margin-bottom: 10px; border-radius: 6px; border: 1px solid #ccc; font-size: 1rem; box-sizing: border-box;}
-        .btn-primary { background: var(--primary); color: white; border: none; font-weight: bold; cursor: pointer; }
-        .btn-danger { background: #dc2626; color: white; border: none; font-weight: bold; cursor: pointer; display: none; }
-        .btn-warning { background: #f59e0b; color: white; border: none; font-weight: bold; cursor: pointer; margin-bottom: 20px; }
-        
-        .data-display { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; text-align: center; margin-bottom: 20px; }
-        .data-val { font-size: 1.5rem; font-weight: bold; color: var(--primary); }
-        .label { font-size: 0.8rem; color: #666; }
-        
-        #log { background: #eee; padding: 10px; height: 100px; overflow-y: scroll; font-size: 0.8rem; border-radius: 6px; }
-        .hidden { display: none; }
+        :root {
+            --primary: #2563eb;
+            --success: #16a34a;
+            --bg: #f8fafc;
+        }
+
+        body {
+            font-family: sans-serif;
+            background: var(--bg);
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+
+        input,
+        button {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 10px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            font-size: 1rem;
+            box-sizing: border-box;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            border: none;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .btn-danger {
+            background: #dc2626;
+            color: white;
+            border: none;
+            font-weight: bold;
+            cursor: pointer;
+            display: none;
+        }
+
+        .btn-warning {
+            background: #f59e0b;
+            color: white;
+            border: none;
+            font-weight: bold;
+            cursor: pointer;
+            margin-bottom: 20px;
+        }
+
+        .data-display {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .data-val {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--primary);
+        }
+
+        .label {
+            font-size: 0.8rem;
+            color: #666;
+        }
+
+        #log {
+            background: #eee;
+            padding: 10px;
+            height: 100px;
+            overflow-y: scroll;
+            font-size: 0.8rem;
+            border-radius: 6px;
+        }
+
+        .hidden {
+            display: none;
+        }
     </style>
 </head>
+
 <body>
 
-<div class="container">
-    <h2 style="text-align: center;">Telemetri Sensor HP</h2>
+    <div class="container">
+        <h2 style="text-align: center;">Telemetri Sensor HP</h2>
 
-    <div class="card">
-        <h3>1. Konfigurasi Device</h3>
-        <input type="text" id="device-id" value="HP-MAHASISWA-01" placeholder="Masukkan ID Device">
-        
-        <button onclick="requestSensorPermission()" class="btn-warning" id="btn-permission">
-            ⚠️ Klik Ini Dulu (Wajib untuk iPhone/iOS)
-        </button>
+        <div class="card">
+            <h3>1. Konfigurasi Device</h3>
+            <input type="text" id="device-id" value="HP-MAHASISWA-01" placeholder="Masukkan ID Device">
 
-        <h3>2. Data Sensor Real-time</h3>
-        <div class="data-display">
-            <div>
-                <div class="label">Accel X</div>
-                <div id="val-x" class="data-val">0.0</div>
+            <button onclick="requestSensorPermission()" class="btn-warning" id="btn-permission">
+                ⚠️ Klik Ini Dulu (Wajib untuk iPhone/iOS)
+            </button>
+
+            <h3>2. Data Sensor Real-time</h3>
+            <div class="data-display">
+                <div>
+                    <div class="label">Accel X</div>
+                    <div id="val-x" class="data-val">0.0</div>
+                </div>
+                <div>
+                    <div class="label">Accel Y</div>
+                    <div id="val-y" class="data-val">0.0</div>
+                </div>
+                <div>
+                    <div class="label">Accel Z</div>
+                    <div id="val-z" class="data-val">0.0</div>
+                </div>
             </div>
-            <div>
-                <div class="label">Accel Y</div>
-                <div id="val-y" class="data-val">0.0</div>
-            </div>
-            <div>
-                <div class="label">Accel Z</div>
-                <div id="val-z" class="data-val">0.0</div>
-            </div>
+
+            <button id="btn-start" class="btn-primary" onclick="toggleSending()">Mulai Kirim Data ke Cloud</button>
+            <button id="btn-stop" class="btn-danger" onclick="toggleSending()">Hentikan Pengiriman</button>
+
+            <div id="log">Log status...</div>
         </div>
-
-        <button id="btn-start" class="btn-primary" onclick="toggleSending()">Mulai Kirim Data ke Cloud</button>
-        <button id="btn-stop" class="btn-danger" onclick="toggleSending()">Hentikan Pengiriman</button>
-        
-        <div id="log">Log status...</div>
     </div>
-</div>
 
-<script>
-    // ==========================================
-    // PASTE URL WEB APP (/exec) ANDA DI SINI!
-    const API_URL = "https://script.google.com/macros/s/AKfycbwRWRN2Nn3vvDzWNO8IYinc449oZcnyCCC3NJmzqTX0gSnOyFpEzo4Giap3nYEwg39M4g/exec"; 
-    // ==========================================
+    <script>
 
-    let currentMotion = { x: 0, y: 0, z: 0 };
-    let isSending = false;
-    let sendInterval;
+        const API_URL = "https://script.google.com/macros/s/AKfycbwRWRN2Nn3vvDzWNO8IYinc449oZcnyCCC3NJmzqTX0gSnOyFpEzo4Giap3nYEwg39M4g/exec";
 
-    // --- 1. LOGIC MEMBACA SENSOR HP ---
-    
-    function handleMotion(event) {
-        // Mengambil data percepatan termasuk gravitasi
-        const acc = event.accelerationIncludingGravity;
-        
-        if (acc) {
-            // Update variabel global
-            // Kita pakai toFixed(2) agar angkanya tidak terlalu panjang
-            currentMotion.x = acc.x ? parseFloat(acc.x.toFixed(2)) : 0;
-            currentMotion.y = acc.y ? parseFloat(acc.y.toFixed(2)) : 0;
-            currentMotion.z = acc.z ? parseFloat(acc.z.toFixed(2)) : 0;
-
-            // Update Tampilan HTML agar terlihat bergerak
-            document.getElementById('val-x').innerText = currentMotion.x;
-            document.getElementById('val-y').innerText = currentMotion.y;
-            document.getElementById('val-z').innerText = currentMotion.z;
-        }
-    }
-
-    // Fungsi minta izin (Wajib untuk iOS 13+)
-    function requestSensorPermission() {
-        if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
-            DeviceMotionEvent.requestPermission()
-                .then(response => {
-                    if (response === 'granted') {
-                        window.addEventListener('devicemotion', handleMotion);
-                        alert("Izin diberikan! Coba goyangkan HP Anda.");
-                        document.getElementById('btn-permission').style.display = 'none';
-                    } else {
-                        alert("Izin ditolak. Sensor tidak bisa jalan.");
-                    }
-                })
-                .catch(console.error);
-        } else {
-            // Untuk Android atau iOS lama (langsung jalan)
-            window.addEventListener('devicemotion', handleMotion);
-            alert("Sensor diaktifkan (Android/Laptop). Coba goyangkan.");
-            document.getElementById('btn-permission').style.display = 'none';
-        }
-    }
-
-    // Jalankan listener otomatis untuk Android saat halaman dimuat
-    if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission !== 'function') {
-        window.addEventListener('devicemotion', handleMotion);
-    }
+        let currentMotion = { x: 0, y: 0, z: 0 };
+        let isSending = false;
+        let sendInterval;
 
 
-    // --- 2. LOGIC PENGIRIMAN DATA KE GOOGLE SHEET ---
+        function handleMotion(event) {
+            // Mengambil data percepatan termasuk gravitasi
+            const acc = event.accelerationIncludingGravity;
 
-    function log(msg) {
-        const el = document.getElementById('log');
-        el.innerHTML = `<div>> ${msg}</div>` + el.innerHTML;
-    }
-
-    async function sendData() {
-        const deviceId = document.getElementById('device-id').value;
-        
-        // Kita ambil "snapshot" data sensor saat ini
-        // Kita kirim 1 data saja per request agar ringan, atau bisa array
-        // Di sini saya kirim array berisi 1 sample (sesuai format batch sebelumnya)
-        
-        const payload = {
-            device_id: deviceId,
-            ts: new Date().toISOString(), // Waktu kirim
-            samples: [
-                {
-                    t: new Date().toISOString(),
-                    x: currentMotion.x,
-                    y: currentMotion.y,
-                    z: currentMotion.z
-                }
-            ]
-        };
-
-        try {
-            const response = await fetch(`${API_URL}?path=telemetry/accel`, {
-                method: "POST",
-                redirect: "follow",
-                headers: { "Content-Type": "text/plain;charset=utf-8" },
-                body: JSON.stringify(payload)
-            });
-            
-            const result = await response.json();
-            if(result.ok) {
-                log(`Terkirim: X=${currentMotion.x}, Y=${currentMotion.y}, Z=${currentMotion.z}`);
-            } else {
-                log("Gagal: " + result.error);
+            if (acc) {
+                currentMotion.x = acc.x ? parseFloat(acc.x.toFixed(2)) : 0;
+                currentMotion.y = acc.y ? parseFloat(acc.y.toFixed(2)) : 0;
+                currentMotion.z = acc.z ? parseFloat(acc.z.toFixed(2)) : 0;
+                document.getElementById('val-x').innerText = currentMotion.x;
+                document.getElementById('val-y').innerText = currentMotion.y;
+                document.getElementById('val-z').innerText = currentMotion.z;
             }
-        } catch (e) {
-            log("Error Jaringan (CORS/Sinyal)");
         }
-    }
 
-    function toggleSending() {
-        const btnStart = document.getElementById('btn-start');
-        const btnStop = document.getElementById('btn-stop');
-
-        if (!isSending) {
-            isSending = true;
-            btnStart.style.display = 'none';
-            btnStop.style.display = 'block';
-            
-            // Kirim data setiap 2 detik (2000 ms) agar tidak membebani server Google
-            sendInterval = setInterval(sendData, 2000); 
-            log("Mulai mengirim data sensor asli...");
-        } else {
-            isSending = false;
-            clearInterval(sendInterval);
-            btnStart.style.display = 'block';
-            btnStop.style.display = 'none';
-            log("Pengiriman dihentikan.");
+        // Fungsi minta izin (Wajib untuk iOS 13+)
+        function requestSensorPermission() {
+            if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
+                DeviceMotionEvent.requestPermission()
+                    .then(response => {
+                        if (response === 'granted') {
+                            window.addEventListener('devicemotion', handleMotion);
+                            alert("Izin diberikan! Coba goyangkan HP Anda.");
+                            document.getElementById('btn-permission').style.display = 'none';
+                        } else {
+                            alert("Izin ditolak. Sensor tidak bisa jalan.");
+                        }
+                    })
+                    .catch(console.error);
+            } else {
+                // Untuk Android atau iOS lama (langsung jalan)
+                window.addEventListener('devicemotion', handleMotion);
+                alert("Sensor diaktifkan (Android/Laptop). Coba goyangkan.");
+                document.getElementById('btn-permission').style.display = 'none';
+            }
         }
-    }
-</script>
+
+        // Jalankan listener otomatis untuk Android saat halaman dimuat
+        if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission !== 'function') {
+            window.addEventListener('devicemotion', handleMotion);
+        }
+
+
+        // --- 2. LOGIC PENGIRIMAN DATA KE GOOGLE SHEET ---
+
+        function log(msg) {
+            const el = document.getElementById('log');
+            el.innerHTML = `<div>> ${msg}</div>` + el.innerHTML;
+        }
+
+        async function sendData() {
+            const deviceId = document.getElementById('device-id').value;
+
+            const payload = {
+                device_id: deviceId,
+                ts: new Date().toISOString(),
+                samples: [
+                    {
+                        t: new Date().toISOString(),
+                        x: currentMotion.x,
+                        y: currentMotion.y,
+                        z: currentMotion.z
+                    }
+                ]
+            };
+
+            try {
+                const response = await fetch(`${API_URL}?path=telemetry/accel`, {
+                    method: "POST",
+                    redirect: "follow",
+                    headers: { "Content-Type": "text/plain;charset=utf-8" },
+                    body: JSON.stringify(payload)
+                });
+
+                const result = await response.json();
+                if (result.ok) {
+                    log(`Terkirim: X=${currentMotion.x}, Y=${currentMotion.y}, Z=${currentMotion.z}`);
+                } else {
+                    log("Gagal: " + result.error);
+                }
+            } catch (e) {
+                log("Error Jaringan (CORS/Sinyal)");
+            }
+        }
+
+        function toggleSending() {
+            const btnStart = document.getElementById('btn-start');
+            const btnStop = document.getElementById('btn-stop');
+
+            if (!isSending) {
+                isSending = true;
+                btnStart.style.display = 'none';
+                btnStop.style.display = 'block';
+
+                // Kirim data setiap 2 detik (2000 ms) agar tidak membebani server Google
+                sendInterval = setInterval(sendData, 2000);
+                log("Mulai mengirim data sensor asli...");
+            } else {
+                isSending = false;
+                clearInterval(sendInterval);
+                btnStart.style.display = 'block';
+                btnStop.style.display = 'none';
+                log("Pengiriman dihentikan.");
+            }
+        }
+    </script>
 
 </body>
+
 </html>
