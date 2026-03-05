@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Telemetri Sensor HP</title>
+
+    <style>
+        :root {
+            --primary: #2563eb;
+            --danger: #dc2626;
+            --warning: #f59e0b;
+            --bg: #f8fafc;
+        }
+
+        body {
+            font-family: sans-serif;
+            background: var(--bg);
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+
+        input,
+        button {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 10px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            font-size: 1rem;
+            box-sizing: border-box;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            border: none;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+            border: none;
+            font-weight: bold;
+            cursor: pointer;
+            display: none;
+        }
+
+        .btn-warning {
+            background: var(--warning);
+            color: white;
+            border: none;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .data-display {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .data-val {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--primary);
+        }
+
+        .label {
+            font-size: 0.8rem;
+            color: #666;
+        }
+
+        #log {
+            background: #eee;
+            padding: 10px;
+            height: 120px;
+            overflow-y: auto;
+            font-size: 0.8rem;
+            border-radius: 6px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <h2 style="text-align: center;">Telemetri Sensor HP</h2>
+
+        <div class="card">
+            <h3>1. Konfigurasi Device</h3>
+            <input type="text" id="device-id" placeholder="Masukkan ID Device">
+
+            <button onclick="requestSensorPermission()" class="btn-warning">
+                Klik Ini Dulu (Wajib untuk iPhone/iOS)
+            </button>
+
+            <h3>2. Data Sensor Real-time</h3>
+
+            <div class="data-display">
+                <div>
+                    <div class="label">Accel X</div>
+                    <div id="val-x" class="data-val">0.00</div>
+                </div>
+                <div>
+                    <div class="label">Accel Y</div>
+                    <div id="val-y" class="data-val">0.00</div>
+                </div>
+                <div>
+                    <div class="label">Accel Z</div>
+                    <div id="val-z" class="data-val">0.00</div>
+                </div>
+            </div>
+
+            <button id="btn-start" class="btn-primary" onclick="toggleSending()">
+                Mulai Kirim Data ke Cloud
+            </button>
+
+            <button id="btn-stop" class="btn-danger" onclick="toggleSending()">
+                Hentikan Pengiriman
+            </button>
+
+            <div id="log">Log status...</div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = "https://script.google.com/macros/s/AKfycbwRWRN2Nn3vvDzWNO8IYinc449oZcnyCCC3NJmzqTX0gSnOyFpEzo4Giap3nYEwg39M4g/exec";
+
+        let currentMotion = { x: 0, y: 0, z: 0 };
+        let isSending = false;
+        let sendInterval;
+
+        function log(msg) {
+            const el = document.getElementById('log');
+            el.innerHTML = `<div>> ${msg}</div>` + el.innerHTML;
+        }
+
+        function handleMotion(event) {
+            const acc = event.accelerationIncludingGravity;
+            if (!acc) return;
+
+            currentMotion.x = (acc.x ?? 0).toFixed(2);
+            currentMotion.y = (acc.y ?? 0).toFixed(2);
+            currentMotion.z = (acc.z ?? 0).toFixed(2);
+
+            document.getElementById('val-x').textContent = currentMotion.x;
+            document.getElementById('val-y').textContent = currentMotion.y;
+            document.getElementById('val-z').textContent = currentMotion.z;
+        }
+
+        function requestSensorPermission() {
+            if (location.protocol !== "https:" && location.hostname !== "localhost") {
+                log("iOS butuh HTTPS untuk sensor.");
+                return;
+            }
+
+            if (typeof DeviceMotionEvent !== 'undefined' &&
+                typeof DeviceMotionEvent.requestPermission === 'function') {
+
+                DeviceMotionEvent.requestPermission()
+                    .then(response => {
+                        if (response === 'granted') {
+                            window.addEventListener('devicemotion', handleMotion);
+                            log("Izin sensor diberikan.");
+                        } else {
+                            log("Izin sensor ditolak.");
+                        }
+                    })
+                    .catch(err => log("Error izin: " + err));
+
+            } else {
+                window.addEventListener('devicemotion', handleMotion);
+                log("Sensor aktif (Android / non-iOS).");
+            }
+        }
+
+        async function sendData() {
+            const deviceId = document.getElementById('device-id').value;
+
+            const payload = {
+                device_id: deviceId,
+                ts: new Date().toISOString(),
+                samples: [{
+                    t: new Date().toISOString(),
+                    x: currentMotion.x,
+                    y: currentMotion.y,
+                    z: currentMotion.z
+                }]
+            };
+
+            try {
+                const response = await fetch(`${API_URL}?path=telemetry/accel`, {
+                    method: "POST",
+                    headers: { "Content-Type": "text/plain;charset=utf-8" },
+                    body: JSON.stringify(payload)
+                });
+
+                const text = await response.text();
+                let result;
+
+                try {
+                    result = JSON.parse(text);
+                } catch {
+                    log("Response bukan JSON.");
+                    return;
+                }
+
+                if (result.ok) {
+                    log(`Terkirim: X=${currentMotion.x}, Y=${currentMotion.y}, Z=${currentMotion.z}`);
+                } else {
+                    log("Gagal: " + result.error);
+                }
+
+            } catch (e) {
+                log("Error jaringan / CORS.");
+                console.error(e);
+            }
+        }
+
+        function toggleSending() {
+            const btnStart = document.getElementById('btn-start');
+            const btnStop = document.getElementById('btn-stop');
+
+            if (!isSending) {
+                isSending = true;
+                btnStart.style.display = 'none';
+                btnStop.style.display = 'block';
+                sendInterval = setInterval(sendData, 5000);
+                log("Mulai mengirim data...");
+            } else {
+                isSending = false;
+                clearInterval(sendInterval);
+                btnStart.style.display = 'block';
+                btnStop.style.display = 'none';
+                log("Pengiriman dihentikan.");
+            }
+        }
+
+        // Auto listener untuk Android
+        if (typeof DeviceMotionEvent !== 'undefined' &&
+            typeof DeviceMotionEvent.requestPermission !== 'function') {
+            window.addEventListener('devicemotion', handleMotion);
+        }
+    </script>
+
+</body>
+</html>
