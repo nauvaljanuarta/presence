@@ -185,13 +185,11 @@
             }
         }
 
-        // --- 3. LOG HELPER ---
         function log(msg) {
             const el = document.getElementById('log');
             el.innerHTML = `<div>> ${msg}</div>` + el.innerHTML;
         }
 
-        // --- 4. SEND DATA TO GOOGLE SHEET ---
         async function sendData() {
             const deviceId = document.getElementById('device-id').value;
 
