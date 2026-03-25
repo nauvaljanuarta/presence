@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Presence QR API
-  description: API for QR-based attendance and telemetry tracking (Accelerometer & GPS).
+  description: "API for QR-based attendance and telemetry tracking (Accelerometer & GPS)."
   version: 1.1.0
 
 servers:
@@ -24,7 +24,8 @@ paths:
           required: true
           schema:
             type: string
-            enum: [presence/qr/generate]
+            enum:
+              - presence/qr/generate
             default: presence/qr/generate
       requestBody:
         required: true
@@ -32,7 +33,10 @@ paths:
           application/json:
             schema:
               type: object
-              required: [course_id, session_id, timestamp]
+              required:
+                - course_id
+                - session_id
+                - timestamp
               properties:
                 course_id:
                   type: string
@@ -52,12 +56,20 @@ paths:
               schema:
                 type: object
                 properties:
-                  ok: { type: boolean }
+                  ok:
+                    type: boolean
                   data:
                     type: object
                     properties:
-                      qr_token: { type: string }
-                      expires_at: { type: string, format: date-time }
+                      qr_token:
+                        type: string
+                      session_id:
+                        type: string
+                      course_id:
+                        type: string
+                      expires_at:
+                        type: string
+                        format: date-time
 
   /presence/checkin:
     post:
@@ -69,7 +81,8 @@ paths:
           required: true
           schema:
             type: string
-            enum: [presence/checkin]
+            enum:
+              - presence/checkin
             default: presence/checkin
       requestBody:
         required: true
@@ -77,42 +90,94 @@ paths:
           application/json:
             schema:
               type: object
-              required: [user_id, device_id, qr_token, timestamp]
+              required:
+                - user_id
+                - device_id
+                - qr_token
+                - timestamp
               properties:
-                user_id: { type: string }
-                device_id: { type: string }
-                qr_token: { type: string }
-                timestamp: { type: string, format: date-time }
+                user_id:
+                  type: string
+                device_id:
+                  type: string
+                qr_token:
+                  type: string
+                timestamp:
+                  type: string
+                  format: date-time
       responses:
         "200":
           description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      presence_id:
+                        type: string
+                      course_id:
+                        type: string
+                      session_id:
+                        type: string
+                      status:
+                        type: string
 
   /presence/status:
     get:
       summary: Check Attendance Status
+      description: Check if a user has already checked in for a specific session.
       parameters:
         - name: path
           in: query
           required: true
           schema:
             type: string
-            enum: [presence/status]
+            enum:
+              - presence/status
             default: presence/status
         - name: user_id
           in: query
           required: true
-          schema: { type: string }
+          schema:
+            type: string
         - name: course_id
           in: query
           required: true
-          schema: { type: string }
+          schema:
+            type: string
         - name: session_id
           in: query
           required: true
-          schema: { type: string }
+          schema:
+            type: string
       responses:
         "200":
           description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      user_id:
+                        type: string
+                      course_id:
+                        type: string
+                      session_id:
+                        type: string
+                      status:
+                        type: string
+                      last_timestamp:
+                        type: string
 
   # ==========================================
   # TELEMETRY (ACCELEROMETER)
@@ -120,13 +185,15 @@ paths:
   /telemetry/accel:
     post:
       summary: Post Accelerometer Data
+      description: Submit accelerometer sensor samples from a device.
       parameters:
         - name: path
           in: query
           required: true
           schema:
             type: string
-            enum: [telemetry/accel]
+            enum:
+              - telemetry/accel
             default: telemetry/accel
       requestBody:
         required: true
@@ -134,41 +201,84 @@ paths:
           application/json:
             schema:
               type: object
-              required: [device_id, samples]
+              required:
+                - device_id
+                - samples
               properties:
-                device_id: { type: string }
-                ts: { type: string, format: date-time }
+                device_id:
+                  type: string
+                ts:
+                  type: string
+                  format: date-time
                 samples:
                   type: array
                   items:
                     type: object
                     properties:
-                      t: { type: string, format: date-time }
-                      x: { type: number }
-                      y: { type: number }
-                      z: { type: number }
+                      t:
+                        type: string
+                        format: date-time
+                      x:
+                        type: number
+                      y:
+                        type: number
+                      z:
+                        type: number
       responses:
         "200":
           description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      accepted:
+                        type: integer
 
   /telemetry/accel/latest:
     get:
       summary: Get Latest Accelerometer Data
+      description: Retrieve the most recent accelerometer data for a given device.
       parameters:
         - name: path
           in: query
           required: true
           schema:
             type: string
-            enum: [telemetry/accel/latest]
+            enum:
+              - telemetry/accel/latest
             default: telemetry/accel/latest
         - name: device_id
           in: query
           required: true
-          schema: { type: string }
+          schema:
+            type: string
       responses:
         "200":
           description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      t:
+                        type: string
+                      x:
+                        type: number
+                      y:
+                        type: number
+                      z:
+                        type: number
 
   # ==========================================
   # TELEMETRY (GPS)
@@ -176,13 +286,15 @@ paths:
   /telemetry/gps:
     post:
       summary: Post GPS Data
+      description: Submit GPS location data from a device.
       parameters:
         - name: path
           in: query
           required: true
           schema:
             type: string
-            enum: [telemetry/gps]
+            enum:
+              - telemetry/gps
             default: telemetry/gps
       requestBody:
         required: true
@@ -190,72 +302,144 @@ paths:
           application/json:
             schema:
               type: object
-              required: [device_id, lat, lng]
+              required:
+                - device_id
+                - lat
+                - lng
               properties:
-                device_id: { type: string }
-                ts: { type: string, format: date-time }
-                lat: { type: number }
-                lng: { type: number }
-                accuracy_m: { type: number }
+                device_id:
+                  type: string
+                ts:
+                  type: string
+                  format: date-time
+                lat:
+                  type: number
+                lng:
+                  type: number
+                accuracy_m:
+                  type: number
       responses:
         "200":
           description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      accepted:
+                        type: boolean
 
   /telemetry/gps/latest:
     get:
       summary: Get Latest GPS Location
+      description: Retrieve the latest GPS coordinates for a given device.
       parameters:
         - name: path
           in: query
           required: true
           schema:
             type: string
-            enum: [telemetry/gps/latest]
+            enum:
+              - telemetry/gps/latest
             default: telemetry/gps/latest
         - name: device_id
           in: query
           required: true
-          schema: { type: string }
+          schema:
+            type: string
       responses:
         "200":
           description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      ts:
+                        type: string
+                      lat:
+                        type: number
+                      lng:
+                        type: number
+                      accuracy_m:
+                        type: number
 
   /telemetry/gps/history:
     get:
       summary: Get GPS History
+      description: Retrieve GPS location history for a device, ordered from oldest to newest.
       parameters:
         - name: path
           in: query
           required: true
           schema:
             type: string
-            enum: [telemetry/gps/history]
+            enum:
+              - telemetry/gps/history
             default: telemetry/gps/history
         - name: device_id
           in: query
           required: true
-          schema: { type: string }
+          schema:
+            type: string
         - name: limit
           in: query
-          schema: { type: integer, default: 200 }
+          schema:
+            type: integer
+            default: 200
       responses:
         "200":
           description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      device_id:
+                        type: string
+                      items:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            ts:
+                              type: string
+                            lat:
+                              type: number
+                            lng:
+                              type: number
 
   # ==========================================
   # UI PAGES
   # ==========================================
-  /?page=scan:
+  /scan:
     get:
       summary: Get QR Scanner Page
+      description: Returns the HTML page for QR scanning. Use query parameter page=scan.
       parameters:
         - name: page
           in: query
           required: true
           schema:
             type: string
-            enum: [scan]
+            enum:
+              - scan
             default: scan
       responses:
         "200":
-          description: Returns HTML for scanning
+          description: Returns HTML page for QR scanning
