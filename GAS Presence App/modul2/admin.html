@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin GPS | UNAIR</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #f8fafc;
+        }
+    </style>
+</head>
+
+<body class="min-h-screen flex flex-col text-slate-800">
+
+    <header class="bg-indigo-700 text-white p-6 shadow-md flex justify-between items-center">
+        <div>
+            <h1 class="text-2xl font-bold">Admin GPS Dashboard</h1>
+            <p class="text-indigo-200 text-sm">Monitoring Pergerakan Mahasiswa</p>
+        </div>
+        <a href="index.html" class="px-4 py-2 bg-indigo-800 hover:bg-indigo-900 rounded-lg text-sm transition-colors"><i
+                class="fas fa-arrow-left mr-2"></i>Kembali</a>
+    </header>
+
+    <main class="flex-grow p-6 max-w-5xl mx-auto w-full">
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+
+            <div class="flex flex-col md:flex-row gap-4 mb-6">
+                <div class="flex-grow relative">
+                    <i class="fas fa-search absolute left-4 top-3.5 text-slate-400"></i>
+                    <input type="text" id="monitor-id" placeholder="Masukkan Device ID Mahasiswa"
+                        class="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all">
+                </div>
+                <button id="btn-monitor" onclick="toggleMonitor()"
+                    class="px-8 py-3 bg-indigo-600 text-white font-bold rounded-xl shadow-lg shadow-indigo-500/30 hover:bg-indigo-700 transition-all whitespace-nowrap">
+                    <i class="fas fa-eye mr-2"></i> Pantau
+                </button>
+            </div>
+
+            <div id="map" class="w-full h-[450px] rounded-xl border-2 border-slate-200 mb-4 z-0"></div>
+
+            <div class="bg-slate-900 text-indigo-400 p-3 rounded-xl h-24 overflow-y-auto font-mono text-xs"
+                id="log-admin">
+                <div>> Sistem pemetaan siap. Menunggu ID Device...</div>
+            </div>
+
+        </div>
+    </main>
+
+    <script>
+        const API_URL = "https://script.google.com/macros/s/AKfycbwRWRN2Nn3vvDzWNO8IYinc449oZcnyCCC3NJmzqTX0gSnOyFpEzo4Giap3nYEwg39M4g/exec";
+        function logA(msg) { document.getElementById('log-admin').innerHTML = `<div>> ${msg}</div>` + document.getElementById('log-admin').innerHTML; }
+
+        let map, marker, polyline, monitorInterval, isMonitoring = false;
+
+        // Inisialisasi peta langsung saat halaman admin dibuka
+        window.onload = () => {
+            map = L.map('map').setView([-7.2575, 112.7521], 13); // Default Surabaya
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
+        };
+
+        async function fetchMapData() {
+            const deviceId = document.getElementById('monitor-id').value.trim();
+            if (!deviceId) return;
+
+            try {
+                // Fetch History
+                const resHist = await fetch(`${API_URL}?path=telemetry/gps/history&device_id=${deviceId}&limit=50`);
+                const histData = await resHist.json();
+                if (histData.ok && histData.data.items.length > 0) {
+                    const latlngs = histData.data.items.map(p => [p.lat, p.lng]);
+                    if (polyline) map.removeLayer(polyline);
+                    polyline = L.polyline(latlngs, { color: '#4f46e5', weight: 4 }).addTo(map); // Warna indigo
+                }
+
+                // Fetch Latest
+                const resLatest = await fetch(`${API_URL}?path=telemetry/gps/latest&device_id=${deviceId}`);
+                const latestData = await resLatest.json();
+                if (latestData.ok) {
+                    const pos = [latestData.data.lat, latestData.data.lng];
+                    if (marker) marker.setLatLng(pos);
+                    else marker = L.marker(pos).addTo(map).bindPopup("Posisi Saat Ini").openPopup();
+
+                    map.setView(pos, map.getZoom());
+                    logA(`Update: Lat ${pos[0].toFixed(5)}, Lng ${pos[1].toFixed(5)}`);
+                }
+            } catch (e) { logA("Gagal sinkronisasi peta."); }
+        }
+
+        function toggleMonitor() {
+            const btn = document.getElementById('btn-monitor');
+            const input = document.getElementById('monitor-id');
+            if (!input.value.trim()) return alert("Isi Device ID dulu!");
+
+            if (!isMonitoring) {
+                isMonitoring = true;
+                btn.innerHTML = '<i class="fas fa-stop mr-2"></i> Berhenti';
+                btn.classList.replace('bg-indigo-600', 'bg-red-600');
+                btn.classList.replace('hover:bg-indigo-700', 'hover:bg-red-700');
+                btn.classList.replace('shadow-indigo-500/30', 'shadow-red-500/30');
+                input.readOnly = true;
+                fetchMapData();
+                monitorInterval = setInterval(fetchMapData, 3000);
+            } else {
+                isMonitoring = false;
+                btn.innerHTML = '<i class="fas fa-eye mr-2"></i> Pantau';
+                btn.classList.replace('bg-red-600', 'bg-indigo-600');
+                btn.classList.replace('hover:bg-red-700', 'hover:bg-indigo-700');
+                btn.classList.replace('shadow-red-500/30', 'shadow-indigo-500/30');
+                input.readOnly = false;
+                clearInterval(monitorInterval);
+                logA("Pemantauan dijeda.");
+            }
+        }
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GPS Sender | UNAIR</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+    </style>
+</head>
+
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
+
+    <header class="bg-gradient-to-r from-blue-700 to-indigo-800 text-white pt-10 pb-20 px-6 text-center shadow-lg">
+        <h1 class="text-3xl font-extrabold mb-2">Perangkat Mahasiswa</h1>
+        <p class="text-blue-200 font-medium"><i class="fas fa-satellite-dish mr-2"></i>Modul 02 - Telemetri GPS</p>
+    </header>
+
+    <main class="flex-grow flex justify-center px-4 -mt-12 relative z-10 mb-10">
+        <div class="bg-white rounded-3xl shadow-xl border border-slate-100 p-6 md:p-8 w-full max-w-lg">
+
+            <div class="text-center mb-8">
+                <div
+                    class="w-12 h-12 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-3 shadow-inner">
+                    <i class="fas fa-location-arrow text-xl"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-slate-800">Kirim Lokasi</h2>
+            </div>
+
+            <div class="bg-slate-50 p-5 rounded-2xl border border-slate-200 mb-6">
+
+                <div class="mb-5">
+                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Device
+                        ID</label>
+                    <div class="relative">
+                        <i class="fas fa-fingerprint absolute left-4 top-3.5 text-slate-400"></i>
+                        <input type="text" id="device-id" placeholder="Mendeteksi Device..." readonly
+                            class="w-full pl-10 pr-4 py-3 bg-white border border-slate-300 rounded-xl text-sm text-slate-600 font-mono outline-none shadow-sm" />
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-3 gap-3 mb-2 text-center">
+                    <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
+                        <div class="text-[10px] font-bold text-slate-400 uppercase mb-1">Latitude</div>
+                        <div id="val-lat" class="text-sm font-bold text-blue-600">-</div>
+                    </div>
+                    <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
+                        <div class="text-[10px] font-bold text-slate-400 uppercase mb-1">Longitude</div>
+                        <div id="val-lng" class="text-sm font-bold text-blue-600">-</div>
+                    </div>
+                    <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
+                        <div class="text-[10px] font-bold text-slate-400 uppercase mb-1">Akurasi</div>
+                        <div id="val-acc" class="text-sm font-bold text-blue-600">-</div>
+                    </div>
+                </div>
+
+            </div>
+
+            <button id="btn-start" onclick="toggleGps()" disabled
+                class="w-full py-4 rounded-xl bg-blue-600 text-white font-bold text-sm shadow-lg shadow-blue-500/30 hover:bg-blue-700 disabled:opacity-50 transition-all mb-6">
+                <i class="fas fa-play mr-2"></i> Mulai Lacak & Kirim
+            </button>
+
+            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">System Log</label>
+            <div class="bg-slate-900 text-blue-400 p-4 rounded-xl h-32 overflow-y-auto font-mono text-xs border border-slate-800 shadow-inner"
+                id="log-sender">
+                <div>> Sistem siap...</div>
+            </div>
+
+        </div>
+    </main>
+
+    <footer class="py-6 text-center mt-auto">
+        <a href="index.html"
+            class="inline-flex items-center text-slate-500 hover:text-blue-600 text-sm font-medium transition-colors bg-white px-4 py-2 rounded-full shadow-sm border border-slate-200">
+            <i class="fas fa-arrow-left mr-2"></i> Kembali ke Menu Pilihan
+        </a>
+    </footer>
+
+    <script>
+        const API_URL = "https://script.google.com/macros/s/AKfycbwRWRN2Nn3vvDzWNO8IYinc449oZcnyCCC3NJmzqTX0gSnOyFpEzo4Giap3nYEwg39M4g/exec";
+        function logS(msg) { document.getElementById('log-sender').innerHTML = `<div>> ${msg}</div>` + document.getElementById('log-sender').innerHTML; }
+
+        const fpPromise = import('https://openfpcdn.io/fingerprintjs/v4').then(fp => fp.load());
+        fpPromise.then(fp => fp.get()).then(result => {
+            document.getElementById('device-id').value = result.visitorId;
+            const btn = document.getElementById('btn-start');
+            btn.disabled = false;
+            logS("Fingerprint siap.");
+        });
+
+        let watchId = null, isTracking = false, lastSent = 0;
+
+        function handlePosition(position) {
+            const lat = position.coords.latitude, lng = position.coords.longitude, acc = position.coords.accuracy;
+            document.getElementById('val-lat').innerText = lat.toFixed(5);
+            document.getElementById('val-lng').innerText = lng.toFixed(5);
+            document.getElementById('val-acc').innerText = Math.round(acc) + "m";
+
+            if (Date.now() - lastSent > 3000) {
+                sendGpsToServer(lat, lng, acc);
+                lastSent = Date.now();
+            }
+        }
+
+        async function sendGpsToServer(lat, lng, acc) {
+            const payload = { device_id: document.getElementById('device-id').value, ts: new Date().toISOString(), lat, lng, accuracy_m: acc };
+            try {
+                const res = await fetch(`${API_URL}?path=telemetry/gps`, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(payload) });
+                if ((await res.json()).ok) logS(`Kirim: ${lat.toFixed(4)}, ${lng.toFixed(4)}`);
+            } catch (e) { logS("Gagal kirim."); }
+        }
+
+        function toggleGps() {
+            const btn = document.getElementById('btn-start');
+            if (!isTracking) {
+                if (!navigator.geolocation) return alert("Browser tidak support GPS!");
+                watchId = navigator.geolocation.watchPosition(handlePosition, (err) => logS(`Error: ${err.message}`), { enableHighAccuracy: true, maximumAge: 0, timeout: 5000 });
+                isTracking = true;
+                btn.innerHTML = '<i class="fas fa-stop mr-2"></i> Hentikan Lacak';
+
+                // Ubah ke warna merah saat stop
+                btn.classList.replace('bg-blue-600', 'bg-red-600');
+                btn.classList.replace('hover:bg-blue-700', 'hover:bg-red-700');
+                btn.classList.replace('shadow-blue-500/30', 'shadow-red-500/30');
+
+                logS("Membaca satelit GPS...");
+            } else {
+                navigator.geolocation.clearWatch(watchId);
+                isTracking = false;
+                btn.innerHTML = '<i class="fas fa-play mr-2"></i> Mulai Lacak & Kirim';
+
+                // Kembali ke warna biru saat start
+                btn.classList.replace('bg-red-600', 'bg-blue-600');
+                btn.classList.replace('hover:bg-red-700', 'hover:bg-blue-700');
+                btn.classList.replace('shadow-red-500/30', 'shadow-blue-500/30');
+
+                logS("Pelacakan dihentikan.");
+            }
+        }
+    </script>
+</body>
+
+</html>
