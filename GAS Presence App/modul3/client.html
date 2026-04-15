@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sensor Sender | UNAIR</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+    </style>
+</head>
+
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
+
+    <header class="bg-gradient-to-r from-blue-700 to-indigo-800 text-white pt-10 pb-20 px-6 text-center shadow-lg">
+        <h1 class="text-3xl font-extrabold mb-2">Perangkat Mahasiswa</h1>
+        <p class="text-blue-200 font-medium"><i class="fas fa-microchip mr-2"></i>Modul 03 - Sensor Accelerometer</p>
+    </header>
+
+    <main class="flex-grow flex justify-center px-4 -mt-12 relative z-10 mb-10">
+        <div class="bg-white rounded-3xl shadow-xl border border-slate-100 p-6 md:p-8 w-full max-w-lg">
+
+            <div class="mb-5">
+                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Device ID</label>
+                <div class="relative">
+                    <i class="fas fa-fingerprint absolute left-4 top-3.5 text-slate-400"></i>
+                    <input type="text" id="device-id" placeholder="Mendeteksi Device..." readonly
+                        class="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-600 font-mono outline-none" />
+                </div>
+            </div>
+
+            <button onclick="requestSensorPermission()"
+                class="w-full mb-5 py-3 rounded-xl bg-amber-100 text-amber-700 border border-amber-300 font-bold text-sm hover:bg-amber-200 transition-colors">
+                <i class="fas fa-unlock mr-2"></i> Izinkan Sensor (Wajib untuk iPhone/iOS)
+            </button>
+
+            <div class="grid grid-cols-3 gap-3 mb-5 text-center">
+                <div class="bg-red-50 p-3 rounded-xl border border-red-100">
+                    <div class="text-[10px] font-bold text-red-400 uppercase mb-1">Accel X</div>
+                    <div id="val-x" class="text-lg font-black text-red-600">0.00</div>
+                </div>
+                <div class="bg-emerald-50 p-3 rounded-xl border border-emerald-100">
+                    <div class="text-[10px] font-bold text-emerald-400 uppercase mb-1">Accel Y</div>
+                    <div id="val-y" class="text-lg font-black text-emerald-600">0.00</div>
+                </div>
+                <div class="bg-blue-50 p-3 rounded-xl border border-blue-100">
+                    <div class="text-[10px] font-bold text-blue-400 uppercase mb-1">Accel Z</div>
+                    <div id="val-z" class="text-lg font-black text-blue-600">0.00</div>
+                </div>
+            </div>
+
+            <div class="w-full h-48 mb-6 border border-slate-100 rounded-xl p-2 bg-slate-50">
+                <canvas id="senderChart"></canvas>
+            </div>
+
+            <button id="btn-start" onclick="toggleSending()" disabled
+                class="w-full py-4 rounded-xl bg-blue-600 text-white font-bold text-sm shadow-lg shadow-blue-500/30 hover:bg-blue-700 disabled:opacity-50 transition-all mb-4">
+                <i class="fas fa-cloud-upload-alt mr-2"></i> Mulai Kirim ke Cloud
+            </button>
+
+            <div class="bg-slate-900 text-cyan-400 p-3 rounded-xl h-24 overflow-y-auto font-mono text-xs border border-slate-800"
+                id="log-sender">
+                <div>> Sistem sensor siap...</div>
+            </div>
+
+        </div>
+    </main>
+
+    <footer class="py-6 text-center mt-auto">
+        <a href="index.html"
+            class="inline-flex items-center text-slate-500 hover:text-blue-600 text-sm font-medium transition-colors bg-white px-4 py-2 rounded-full shadow-sm border border-slate-200">
+            <i class="fas fa-arrow-left mr-2"></i> Kembali
+        </a>
+    </footer>
+
+    <script>
+        const API_URL = "https://script.google.com/macros/s/AKfycbwRWRN2Nn3vvDzWNO8IYinc449oZcnyCCC3NJmzqTX0gSnOyFpEzo4Giap3nYEwg39M4g/exec";
+        function logSender(msg) { document.getElementById('log-sender').innerHTML = `<div>> ${msg}</div>` + document.getElementById('log-sender').innerHTML; }
+
+        let currentMotion = { x: 0, y: 0, z: 0 }, isSending = false, isSensorActive = false, sendInterval, senderChartInstance = null;
+
+        // Inisialisasi Fingerprint
+        const fpPromise = import('https://openfpcdn.io/fingerprintjs/v4').then(fp => fp.load());
+        fpPromise.then(fp => fp.get()).then(result => {
+            document.getElementById('device-id').value = result.visitorId;
+            document.getElementById('btn-start').disabled = false;
+        }).catch(() => logSender("Gagal mendeteksi device."));
+
+        // Inisialisasi Chart
+        function initSenderChart() {
+            const ctx = document.getElementById('senderChart').getContext('2d');
+            senderChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: [], datasets: [
+                        { label: 'X', borderColor: '#ef4444', data: [], tension: 0.3, pointRadius: 0, borderWidth: 2 },
+                        { label: 'Y', borderColor: '#10b981', data: [], tension: 0.3, pointRadius: 0, borderWidth: 2 },
+                        { label: 'Z', borderColor: '#3b82f6', data: [], tension: 0.3, pointRadius: 0, borderWidth: 2 }
+                    ]
+                },
+                options: { responsive: true, maintainAspectRatio: false, scales: { x: { display: false }, y: { min: -15, max: 15 } }, animation: { duration: 0 }, plugins: { legend: { display: false } } }
+            });
+        }
+        initSenderChart();
+
+        function handleMotion(event) {
+            const acc = event.accelerationIncludingGravity;
+            if (!acc) return;
+            currentMotion = { x: (acc.x ?? 0).toFixed(2), y: (acc.y ?? 0).toFixed(2), z: (acc.z ?? 0).toFixed(2) };
+            isSensorActive = true;
+        }
+
+        setInterval(() => {
+            if (!isSensorActive) return;
+            document.getElementById('val-x').textContent = currentMotion.x;
+            document.getElementById('val-y').textContent = currentMotion.y;
+            document.getElementById('val-z').textContent = currentMotion.z;
+
+            if (senderChartInstance) {
+                if (senderChartInstance.data.labels.length > 30) {
+                    senderChartInstance.data.labels.shift();
+                    senderChartInstance.data.datasets.forEach(d => d.data.shift());
+                }
+                senderChartInstance.data.labels.push('');
+                senderChartInstance.data.datasets[0].data.push(currentMotion.x);
+                senderChartInstance.data.datasets[1].data.push(currentMotion.y);
+                senderChartInstance.data.datasets[2].data.push(currentMotion.z);
+                senderChartInstance.update();
+            }
+        }, 200);
+
+        function requestSensorPermission() {
+            if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
+                DeviceMotionEvent.requestPermission().then(res => {
+                    if (res === 'granted') { window.addEventListener('devicemotion', handleMotion); logSender("Izin sensor iOS diberikan."); }
+                    else logSender("Izin sensor ditolak.");
+                }).catch(err => logSender("Error izin: " + err));
+            } else {
+                window.addEventListener('devicemotion', handleMotion); logSender("Sensor aktif (Android).");
+            }
+        }
+
+        async function sendData() {
+            const payload = { device_id: document.getElementById('device-id').value, ts: new Date().toISOString(), samples: [{ t: new Date().toISOString(), x: currentMotion.x, y: currentMotion.y, z: currentMotion.z }] };
+            try {
+                const response = await fetch(`${API_URL}?path=telemetry/accel`, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(payload) });
+                if ((await response.json()).ok) logSender(`Terkirim: X=${currentMotion.x}`);
+            } catch (e) { logSender("Error pengiriman."); }
+        }
+
+        function toggleSending() {
+            const btn = document.getElementById('btn-start');
+            if (!isSending) {
+                isSending = true;
+                btn.innerHTML = '<i class="fas fa-stop mr-2"></i> Hentikan Pengiriman';
+                btn.classList.replace('bg-blue-600', 'bg-red-600');
+                btn.classList.replace('hover:bg-blue-700', 'hover:bg-red-700');
+                btn.classList.replace('shadow-blue-500/30', 'shadow-red-500/30');
+                sendInterval = setInterval(sendData, 3000);
+                logSender("Mulai mengirim data ke cloud...");
+            } else {
+                isSending = false;
+                btn.innerHTML = '<i class="fas fa-cloud-upload-alt mr-2"></i> Mulai Kirim ke Cloud';
+                btn.classList.replace('bg-red-600', 'bg-blue-600');
+                btn.classList.replace('hover:bg-red-700', 'hover:bg-blue-700');
+                btn.classList.replace('shadow-red-500/30', 'shadow-blue-500/30');
+                clearInterval(sendInterval);
+                logSender("Pengiriman dihentikan.");
+            }
+        }
+
+        // Auto-listener for Android
+        if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission !== 'function') {
+            window.addEventListener('devicemotion', handleMotion);
+        }
+    </script>
+</body>
+
+</html>

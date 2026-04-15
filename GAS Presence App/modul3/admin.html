@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Sensor | UNAIR</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #f8fafc;
+        }
+    </style>
+</head>
+
+<body class="min-h-screen flex flex-col text-slate-800">
+
+    <header class="bg-indigo-700 text-white p-6 shadow-md flex justify-between items-center">
+        <div>
+            <h1 class="text-2xl font-bold">Admin Sensor Dashboard</h1>
+            <p class="text-indigo-200 text-sm">Monitoring Accelerometer Real-time</p>
+        </div>
+        <a href="index.html" class="px-4 py-2 bg-indigo-800 hover:bg-indigo-900 rounded-lg text-sm transition-colors"><i
+                class="fas fa-arrow-left mr-2"></i>Kembali</a>
+    </header>
+
+    <main class="flex-grow p-6 max-w-6xl mx-auto w-full">
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+
+            <div class="flex flex-col md:flex-row gap-4 mb-6">
+                <div class="flex-grow relative">
+                    <i class="fas fa-search absolute left-4 top-3.5 text-slate-400"></i>
+                    <input type="text" id="monitor-device-id" placeholder="Masukkan Device ID Mahasiswa"
+                        class="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all font-mono text-sm">
+                </div>
+                <button id="btn-monitor" onclick="toggleMonitoring()"
+                    class="px-8 py-3 bg-indigo-600 text-white font-bold rounded-xl shadow-lg shadow-indigo-500/30 hover:bg-indigo-700 transition-all whitespace-nowrap">
+                    <i class="fas fa-satellite-dish mr-2"></i> Pantau Grafik
+                </button>
+            </div>
+
+            <div class="w-full h-[400px] border border-slate-200 rounded-xl p-4 bg-slate-50 mb-6 relative">
+                <canvas id="adminChart"></canvas>
+            </div>
+
+            <div class="bg-slate-900 text-indigo-400 p-3 rounded-xl h-24 overflow-y-auto font-mono text-xs"
+                id="log-admin">
+                <div>> Sistem grafik siap. Menunggu ID Device...</div>
+            </div>
+
+        </div>
+    </main>
+
+    <script>
+        const API_URL = "https://script.google.com/macros/s/AKfycbwRWRN2Nn3vvDzWNO8IYinc449oZcnyCCC3NJmzqTX0gSnOyFpEzo4Giap3nYEwg39M4g/exec";
+        function logAdmin(msg) { document.getElementById('log-admin').innerHTML = `<div>> ${msg}</div>` + document.getElementById('log-admin').innerHTML; }
+
+        let isMonitoring = false, monitorInterval, adminChartInstance = null;
+
+        function initAdminChart() {
+            const ctx = document.getElementById('adminChart').getContext('2d');
+            adminChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: [], datasets: [
+                        { label: 'Sumbu X', borderColor: '#ef4444', backgroundColor: 'rgba(239, 68, 68, 0.1)', fill: true, data: [], tension: 0.4 },
+                        { label: 'Sumbu Y', borderColor: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.1)', fill: true, data: [], tension: 0.4 },
+                        { label: 'Sumbu Z', borderColor: '#3b82f6', backgroundColor: 'rgba(59, 130, 246, 0.1)', fill: true, data: [], tension: 0.4 }
+                    ]
+                },
+                options: { responsive: true, maintainAspectRatio: false, scales: { x: { display: false }, y: { min: -15, max: 15 } }, animation: { duration: 500 }, plugins: { legend: { position: 'top' } } }
+            });
+        }
+        initAdminChart();
+
+        async function fetchLatestData() {
+            const deviceId = document.getElementById('monitor-device-id').value.trim();
+            if (!deviceId) return;
+            try {
+                const response = await fetch(`${API_URL}?path=telemetry/accel/latest&device_id=${deviceId}`);
+                const result = await response.json();
+                if (result.ok) {
+                    const data = result.data;
+                    const timeLabel = new Date(data.t).toLocaleTimeString();
+                    logAdmin(`Update: X=${data.x}, Y=${data.y}, Z=${data.z}`);
+
+                    if (adminChartInstance.data.labels.length > 20) {
+                        adminChartInstance.data.labels.shift();
+                        adminChartInstance.data.datasets.forEach(d => d.data.shift());
+                    }
+                    adminChartInstance.data.labels.push(timeLabel);
+                    adminChartInstance.data.datasets[0].data.push(data.x);
+                    adminChartInstance.data.datasets[1].data.push(data.y);
+                    adminChartInstance.data.datasets[2].data.push(data.z);
+                    adminChartInstance.update();
+                }
+            } catch (e) { logAdmin("Gagal sync data."); }
+        }
+
+        function toggleMonitoring() {
+            const btn = document.getElementById('btn-monitor');
+            const input = document.getElementById('monitor-device-id');
+            if (!input.value.trim()) return alert("Isi Device ID dulu!");
+
+            if (!isMonitoring) {
+                isMonitoring = true;
+                btn.innerHTML = '<i class="fas fa-stop mr-2"></i> Berhenti';
+                btn.classList.replace('bg-indigo-600', 'bg-red-600');
+                btn.classList.replace('hover:bg-indigo-700', 'hover:bg-red-700');
+                btn.classList.replace('shadow-indigo-500/30', 'shadow-red-500/30');
+                input.readOnly = true;
+                fetchLatestData();
+                monitorInterval = setInterval(fetchLatestData, 3000);
+            } else {
+                isMonitoring = false;
+                btn.innerHTML = '<i class="fas fa-satellite-dish mr-2"></i> Pantau Grafik';
+                btn.classList.replace('bg-red-600', 'bg-indigo-600');
+                btn.classList.replace('hover:bg-red-700', 'hover:bg-indigo-700');
+                btn.classList.replace('shadow-red-500/30', 'shadow-indigo-500/30');
+                input.readOnly = false;
+                clearInterval(monitorInterval);
+                logAdmin("Pemantauan dihentikan.");
+            }
+        }
+    </script>
+</body>
+
+</html>
