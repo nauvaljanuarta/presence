@@ -68,6 +68,48 @@
     </div>
   </main>
 
+  <!-- Section Cek Status Presensi -->
+  <section class="flex justify-center px-4 mt-6 mb-6 relative z-10">
+    <div class="bg-white rounded-3xl shadow-xl border border-slate-100 p-8 w-full max-w-lg">
+
+      <div class="text-center mb-6">
+        <div class="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-3">
+          <i class="fas fa-user-check text-xl"></i>
+        </div>
+        <h2 class="text-2xl font-bold text-slate-800">Cek Status Presensi</h2>
+        <p class="text-slate-400 text-sm mt-1">Verifikasi kehadiran mahasiswa pada sesi aktif</p>
+      </div>
+
+      <div class="bg-slate-50 p-5 rounded-2xl border border-slate-200 mb-4">
+        <div class="mb-4">
+          <label class="block text-xs font-bold text-slate-500 uppercase mb-2">NIM / User ID</label>
+          <input type="text" id="check-user-id" placeholder="Contoh: 1234567890"
+            class="w-full px-4 py-3 rounded-xl bg-white border border-slate-300 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 outline-none transition-all">
+        </div>
+        <div class="grid grid-cols-2 gap-3 mb-4">
+          <div>
+            <label class="block text-xs font-bold text-slate-500 uppercase mb-2">ID Mata Kuliah</label>
+            <input type="text" id="check-course" placeholder="CC-101" readonly
+              class="w-full px-4 py-3 rounded-xl bg-slate-100 border border-slate-200 text-slate-500 text-sm cursor-not-allowed outline-none">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-500 uppercase mb-2">ID Sesi</label>
+            <input type="text" id="check-session" placeholder="SES-01" readonly
+              class="w-full px-4 py-3 rounded-xl bg-slate-100 border border-slate-200 text-slate-500 text-sm cursor-not-allowed outline-none">
+          </div>
+        </div>
+
+        <button id="btn-check-status" onclick="checkPresenceStatus()"
+          class="w-full py-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-lg shadow-emerald-500/30 transition-all active:scale-[0.98]">
+          <i class="fas fa-magnifying-glass mr-2"></i> Cek Status
+        </button>
+      </div>
+
+      <div id="status-result" class="hidden rounded-2xl p-5 border text-center"></div>
+
+    </div>
+  </section>
+
   <footer class="py-6 text-center text-slate-400 text-sm font-medium mt-auto">
     &copy; 2026 Admin Lab Kampus B
   </footer>
@@ -149,7 +191,65 @@
           if (timeLeft <= 0) { clearInterval(qrInterval); generateQR(); }
         }, 1000);
       }
+
+      // Auto-sync Course & Session ke section Cek Status
+      const courseInput = document.getElementById('input-course');
+      const sessionInput = document.getElementById('input-session');
+      courseInput.addEventListener('input', () => {
+        document.getElementById('check-course').value = courseInput.value;
+      });
+      sessionInput.addEventListener('input', () => {
+        document.getElementById('check-session').value = sessionInput.value;
+      });
     });
+
+    async function checkPresenceStatus() {
+      const userId = document.getElementById('check-user-id').value.trim();
+      const courseId = document.getElementById('input-course').value.trim() || document.getElementById('check-course').value.trim();
+      const sessionId = document.getElementById('input-session').value.trim() || document.getElementById('check-session').value.trim();
+      const resultEl = document.getElementById('status-result');
+      const btn = document.getElementById('btn-check-status');
+
+      if (!userId || !courseId || !sessionId) {
+        resultEl.className = "rounded-2xl p-5 border text-center bg-amber-50 border-amber-200 text-amber-700";
+        resultEl.classList.remove('hidden');
+        resultEl.innerHTML = '<i class="fas fa-triangle-exclamation mr-2"></i>Lengkapi NIM, ID Mata Kuliah, dan ID Sesi.';
+        return;
+      }
+
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Mengecek...';
+
+      try {
+        const res = await fetch(`${API_URL}?path=presence/status&user_id=${encodeURIComponent(userId)}&course_id=${encodeURIComponent(courseId)}&session_id=${encodeURIComponent(sessionId)}`);
+        const result = await res.json();
+
+        resultEl.classList.remove('hidden');
+
+        if (result.ok && result.data.status === "checked_in") {
+          const ts = result.data.last_timestamp ? new Date(result.data.last_timestamp).toLocaleString('id-ID') : '-';
+          resultEl.className = "rounded-2xl p-5 border text-center bg-emerald-50 border-emerald-200";
+          resultEl.innerHTML = `
+            <div class="text-emerald-600 font-bold text-lg mb-1"><i class="fas fa-circle-check mr-2"></i>Sudah Hadir</div>
+            <div class="text-emerald-500 text-xs font-medium">NIM: ${userId}</div>
+            <div class="text-emerald-400 text-xs mt-1">Tercatat pada ${ts}</div>
+          `;
+        } else {
+          resultEl.className = "rounded-2xl p-5 border text-center bg-slate-50 border-slate-200";
+          resultEl.innerHTML = `
+            <div class="text-slate-500 font-bold text-lg mb-1"><i class="fas fa-circle-xmark mr-2"></i>Belum Hadir</div>
+            <div class="text-slate-400 text-xs font-medium">NIM: ${userId} belum tercatat di sesi ini.</div>
+          `;
+        }
+      } catch (e) {
+        resultEl.classList.remove('hidden');
+        resultEl.className = "rounded-2xl p-5 border text-center bg-red-50 border-red-200 text-red-600";
+        resultEl.innerHTML = '<i class="fas fa-xmark mr-2"></i>Gagal menghubungi server.';
+      }
+
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-magnifying-glass mr-2"></i> Cek Status';
+    }
   </script>
 </body>
 
