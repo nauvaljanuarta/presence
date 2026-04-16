@@ -1,6 +1,6 @@
 # 📱 Presence QR API & Telemetry System
 
-![Version](https://img.shields.io/badge/version-1.2.0-blue.svg)
+![Version](https://img.shields.io/badge/version-1.3.0-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Platform](https://img.shields.io/badge/platform-GAS%20%7C%20Firebase-orange.svg)
 
@@ -44,7 +44,8 @@ presence/
 │   ├── firebase.json           # Konfigurasi hosting & rewrites
 │   └── .firebaserc             # Project ID Firebase (presence-qrcode)
 │
-├── swagger.yaml                # Dokumentasi API lengkap (OpenAPI 3.0)
+├── Presence_API.postman_collection.json  # Koleksi Postman untuk testing endpoint
+├── LAPORAN.md                  # Dokumentasi ringkas API (1 halaman)
 └── README.md                   # Dokumentasi proyek ini
 ```
 
@@ -58,6 +59,7 @@ presence/
 - Node.js v18+ (untuk Firebase)
 - Firebase CLI (`npm i -g firebase-tools`)
 - CLASP CLI (`npm i -g @google/clasp`) — opsional, untuk deploy GAS via terminal
+- [Postman](https://www.postman.com/downloads/) — untuk testing endpoint API
 
 ### Google Apps Script (GAS)
 
@@ -85,7 +87,16 @@ presence/
 
 ## 📖 Dokumentasi API
 
-Seluruh detail API dapat dilihat pada file [swagger.yaml](./swagger.yaml) (OpenAPI 3.0).
+Seluruh endpoint API telah didokumentasikan dan dapat diuji menggunakan Postman Collection yang disediakan.
+
+### 🧪 Testing dengan Postman
+
+1. Buka **Postman** → klik **Import**.
+2. Pilih file [`Presence_API.postman_collection.json`](./Presence_API.postman_collection.json).
+3. Semua endpoint sudah siap dengan URL, body, dan contoh response.
+4. Jalankan sesuai urutan Step 1–8 untuk demo lengkap.
+
+> **Catatan:** Variable `{{BASE_URL}}` sudah dikonfigurasi di dalam collection. Tidak perlu setup environment terpisah.
 
 ### Presence (QR)
 
@@ -131,6 +142,7 @@ Seluruh detail API dapat dilihat pada file [swagger.yaml](./swagger.yaml) (OpenA
 | **Maps**           | Leaflet.js v1.9.4 + OpenStreetMap tiles                  |
 | **Charts**         | Chart.js (real-time line chart)                           |
 | **QR Code**        | goqr.me API (`api.qrserver.com`)                         |
+| **API Testing**    | Postman (Collection v2.1)                                |
 | **Deployment**     | Google Apps Script Web App, Firebase Hosting              |
 
 ---
@@ -183,7 +195,14 @@ Proyek GAS menggunakan 4 sheet pada spreadsheet:
 
 ## 📝 Catatan Perubahan
 
-### v1.2.0 (April 2026)
+### v1.3.0 (April 2026)
+- **Migrasi dokumentasi API dari Swagger (OpenAPI) ke Postman Collection.**
+- Menghapus `swagger.yaml`, diganti dengan `Presence_API.postman_collection.json`.
+- Menambahkan file `LAPORAN.md` — dokumentasi ringkas 1 halaman.
+- Postman Collection mencakup 10 request siap pakai untuk 3 modul (Presensi, Accelerometer, GPS).
+- Setiap request dilengkapi contoh body JSON dan expected response.
+
+### v1.2.0
 - Pembaruan dokumentasi README dengan struktur proyek lengkap.
 - Menambahkan dokumentasi skema Google Sheets (tokens, presence, accelerometer, gps).
 - Menambahkan tech stack & prasyarat instalasi.
@@ -197,7 +216,6 @@ Proyek GAS menggunakan 4 sheet pada spreadsheet:
 - Menambahkan halaman **QR Scanner** (`?page=scan`).
 - Halaman GPS dengan peta Leaflet.js (mode Mahasiswa & Admin).
 - Halaman Accelerometer dengan grafik Chart.js real-time.
-- Pembaruan dokumentasi Swagger (OpenAPI 3.0) dengan skema lengkap.
 - Optimalisasi respon JSON di Google Apps Script.
 
 ### v1.0.0
