@@ -5,7 +5,7 @@ const accelerometer = "accelerometer";
 const gps_sheet = "gps";
 
 function doPost(e) {
-  try { 
+  try {
     const path = e.parameter.path || "";
     const body = JSON.parse(e.postData.contents);
 
@@ -23,13 +23,10 @@ function doPost(e) {
 function doGet(e) {
   const path = e.parameter.path || "";
   const page = e.parameter.page || "";
-
   // presence
   if (path === "presence/status") return checkStatus(e.parameter);
-
   // accelerometry
   if (path === "telemetry/accel/latest") return getLatestAccel(e.parameter);
-
   // GPS
   if (path === "telemetry/gps/latest") return getLatestGps(e.parameter);
   if (path === "telemetry/gps/history") return getGpsHistory(e.parameter);
@@ -58,9 +55,6 @@ function jsonResponse(ok, data = null, error = null) {
     .setMimeType(ContentService.MimeType.JSON);
 }
 
-// ==========================================
-// FITUR PRESENSI (QR)
-// ==========================================
 
 function generateQR(body) {
   const { course_id, session_id, timestamp } = body;

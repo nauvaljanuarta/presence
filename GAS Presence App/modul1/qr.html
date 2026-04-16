@@ -72,6 +72,7 @@
     &copy; 2026 Admin Lab Kampus B
   </footer>
 
+  <script src="../config.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', function () {
       const qrImage = document.getElementById('qr-image');
@@ -94,8 +95,6 @@
         btnStart.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Generating...';
         generateQR();
       }
-
-      const API_URL = "https://script.google.com/macros/s/AKfycbwRWRN2Nn3vvDzWNO8IYinc449oZcnyCCC3NJmzqTX0gSnOyFpEzo4Giap3nYEwg39M4g/exec";
 
       async function generateQR() {
         const currentCourseId = document.getElementById('input-course').value.trim();
