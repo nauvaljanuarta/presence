@@ -56,7 +56,6 @@
         </div>
     </main>
 
-    <!-- Section Get Latest Accelerometer -->
     <section class="px-6 mb-6 max-w-6xl mx-auto w-full">
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
 
@@ -107,7 +106,6 @@
 
     <script src="../config.js"></script>
     <script>
-        // API_URL sudah didefinisikan oleh config.js
         function logAdmin(msg) { document.getElementById('log-admin').innerHTML = `<div>> ${msg}</div>` + document.getElementById('log-admin').innerHTML; }
 
         let isMonitoring = false, monitorInterval, adminChartInstance = null;
@@ -175,6 +173,50 @@
                 input.readOnly = false;
                 clearInterval(monitorInterval);
                 logAdmin("Pemantauan dihentikan.");
+            }
+        }
+
+        // Auto-sync device ID ke section Get Latest
+        document.getElementById('monitor-device-id').addEventListener('input', function () {
+            document.getElementById('latest-device-id').value = this.value;
+        });
+
+        async function fetchOneShot() {
+            const deviceId = document.getElementById('latest-device-id').value.trim();
+            const resultEl = document.getElementById('latest-result');
+            const errorEl = document.getElementById('latest-error');
+
+            errorEl.classList.add('hidden');
+            resultEl.classList.add('hidden');
+
+            if (!deviceId) {
+                errorEl.classList.remove('hidden');
+                errorEl.className = "rounded-xl p-4 text-center text-sm font-semibold bg-amber-50 text-amber-700 border border-amber-200";
+                errorEl.textContent = "Masukkan Device ID terlebih dahulu.";
+                return;
+            }
+
+            try {
+                const res = await fetch(`${API_URL}?path=telemetry/accel/latest&device_id=${encodeURIComponent(deviceId)}`);
+                const result = await res.json();
+
+                if (result.ok) {
+                    resultEl.classList.remove('hidden');
+                    resultEl.className = "rounded-xl border border-slate-200 p-5 bg-white";
+                    document.getElementById('latest-x').textContent = result.data.x;
+                    document.getElementById('latest-y').textContent = result.data.y;
+                    document.getElementById('latest-z').textContent = result.data.z;
+                    const ts = result.data.t ? new Date(result.data.t).toLocaleString('id-ID') : '-';
+                    document.getElementById('latest-ts').textContent = "Tercatat pada " + ts;
+                } else {
+                    errorEl.classList.remove('hidden');
+                    errorEl.className = "rounded-xl p-4 text-center text-sm font-semibold bg-slate-50 text-slate-500 border border-slate-200";
+                    errorEl.textContent = "Device tidak ditemukan atau belum ada data.";
+                }
+            } catch (e) {
+                errorEl.classList.remove('hidden');
+                errorEl.className = "rounded-xl p-4 text-center text-sm font-semibold bg-red-50 text-red-600 border border-red-200";
+                errorEl.textContent = "Gagal menghubungi server.";
             }
         }
     </script>
