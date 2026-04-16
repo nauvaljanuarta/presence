@@ -57,15 +57,113 @@
         </div>
     </main>
 
+    <!-- Section Get Latest GPS -->
+    <section class="px-6 mb-6 max-w-5xl mx-auto w-full">
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+
+            <div class="flex items-center gap-3 mb-5">
+                <div class="w-10 h-10 bg-emerald-100 text-emerald-600 rounded-xl flex items-center justify-center">
+                    <i class="fas fa-location-dot text-lg"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg font-bold text-slate-800">Get Latest Position</h3>
+                    <p class="text-xs text-slate-400 font-medium">Ambil posisi GPS terbaru dari device</p>
+                </div>
+            </div>
+
+            <div class="flex flex-col sm:flex-row gap-3 mb-5">
+                <div class="flex-grow relative">
+                    <i class="fas fa-fingerprint absolute left-4 top-3.5 text-slate-400"></i>
+                    <input type="text" id="gps-latest-device" placeholder="Device ID"
+                        class="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 transition-all font-mono text-sm">
+                </div>
+                <button onclick="fetchLatestGps()"
+                    class="px-8 py-3 bg-emerald-600 text-white font-bold rounded-xl shadow-lg shadow-emerald-500/30 hover:bg-emerald-700 transition-all whitespace-nowrap active:scale-[0.98]">
+                    <i class="fas fa-download mr-2"></i> Ambil Posisi
+                </button>
+            </div>
+
+            <div id="gps-latest-result" class="hidden rounded-xl border border-slate-200 p-5">
+                <div class="grid grid-cols-3 gap-3 text-center mb-3">
+                    <div class="bg-blue-50 p-3 rounded-xl border border-blue-100">
+                        <div class="text-[10px] font-bold text-blue-400 uppercase mb-1">Latitude</div>
+                        <div id="gps-lat" class="text-lg font-black text-blue-600">-</div>
+                    </div>
+                    <div class="bg-indigo-50 p-3 rounded-xl border border-indigo-100">
+                        <div class="text-[10px] font-bold text-indigo-400 uppercase mb-1">Longitude</div>
+                        <div id="gps-lng" class="text-lg font-black text-indigo-600">-</div>
+                    </div>
+                    <div class="bg-slate-50 p-3 rounded-xl border border-slate-200">
+                        <div class="text-[10px] font-bold text-slate-400 uppercase mb-1">Akurasi</div>
+                        <div id="gps-acc" class="text-lg font-black text-slate-600">-</div>
+                    </div>
+                </div>
+                <div id="gps-latest-ts" class="text-center text-xs text-slate-400 font-medium"></div>
+            </div>
+
+            <div id="gps-latest-error" class="hidden rounded-xl p-4 text-center text-sm font-semibold"></div>
+        </div>
+    </section>
+
+    <!-- Section Get History GPS -->
+    <section class="px-6 mb-6 max-w-5xl mx-auto w-full">
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+
+            <div class="flex items-center gap-3 mb-5">
+                <div class="w-10 h-10 bg-indigo-100 text-indigo-600 rounded-xl flex items-center justify-center">
+                    <i class="fas fa-route text-lg"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg font-bold text-slate-800">Riwayat Lokasi</h3>
+                    <p class="text-xs text-slate-400 font-medium">Ambil histori pergerakan GPS dari device</p>
+                </div>
+            </div>
+
+            <div class="flex flex-col sm:flex-row gap-3 mb-5">
+                <div class="flex-grow relative">
+                    <i class="fas fa-fingerprint absolute left-4 top-3.5 text-slate-400"></i>
+                    <input type="text" id="gps-history-device" placeholder="Device ID"
+                        class="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all font-mono text-sm">
+                </div>
+                <div class="relative">
+                    <input type="number" id="gps-history-limit" placeholder="Limit" value="20" min="1" max="200"
+                        class="w-24 px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all text-sm text-center font-mono">
+                </div>
+                <button onclick="fetchGpsHistory()"
+                    class="px-8 py-3 bg-indigo-600 text-white font-bold rounded-xl shadow-lg shadow-indigo-500/30 hover:bg-indigo-700 transition-all whitespace-nowrap active:scale-[0.98]">
+                    <i class="fas fa-clock-rotate-left mr-2"></i> Ambil Riwayat
+                </button>
+            </div>
+
+            <div id="gps-history-result" class="hidden">
+                <div class="overflow-x-auto rounded-xl border border-slate-200">
+                    <table class="w-full text-sm">
+                        <thead class="bg-slate-50 text-slate-500 uppercase text-[10px] font-bold tracking-wider">
+                            <tr>
+                                <th class="px-4 py-3 text-left">#</th>
+                                <th class="px-4 py-3 text-left">Waktu</th>
+                                <th class="px-4 py-3 text-right">Latitude</th>
+                                <th class="px-4 py-3 text-right">Longitude</th>
+                            </tr>
+                        </thead>
+                        <tbody id="gps-history-body" class="divide-y divide-slate-100 font-mono text-xs"></tbody>
+                    </table>
+                </div>
+                <div id="gps-history-count" class="text-center text-xs text-slate-400 font-medium mt-3"></div>
+            </div>
+
+            <div id="gps-history-error" class="hidden rounded-xl p-4 text-center text-sm font-semibold"></div>
+        </div>
+    </section>
+
     <script src="../config.js"></script>
     <script>
-        // API_URL sudah didefinisikan oleh config.js
         function logA(msg) { document.getElementById('log-admin').innerHTML = `<div>> ${msg}</div>` + document.getElementById('log-admin').innerHTML; }
 
         let map, marker, polyline, monitorInterval, isMonitoring = false;
 
         window.onload = () => {
-            map = L.map('map').setView([-7.2575, 112.7521], 13); // Default Surabaya
+            map = L.map('map').setView([-7.2575, 112.7521], 13);
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
         };
 
@@ -74,16 +172,14 @@
             if (!deviceId) return;
 
             try {
-                // Fetch History
                 const resHist = await fetch(`${API_URL}?path=telemetry/gps/history&device_id=${deviceId}&limit=50`);
                 const histData = await resHist.json();
                 if (histData.ok && histData.data.items.length > 0) {
                     const latlngs = histData.data.items.map(p => [p.lat, p.lng]);
                     if (polyline) map.removeLayer(polyline);
-                    polyline = L.polyline(latlngs, { color: '#4f46e5', weight: 4 }).addTo(map); // Warna indigo
+                    polyline = L.polyline(latlngs, { color: '#4f46e5', weight: 4 }).addTo(map);
                 }
 
-                // Fetch Latest
                 const resLatest = await fetch(`${API_URL}?path=telemetry/gps/latest&device_id=${deviceId}`);
                 const latestData = await resLatest.json();
                 if (latestData.ok) {
@@ -121,6 +217,96 @@
                 clearInterval(monitorInterval);
                 logA("Pemantauan dijeda.");
             }
+        }
+
+        document.getElementById('monitor-id').addEventListener('input', function () {
+            document.getElementById('gps-latest-device').value = this.value;
+            document.getElementById('gps-history-device').value = this.value;
+        });
+
+        async function fetchLatestGps() {
+            const deviceId = document.getElementById('gps-latest-device').value.trim();
+            const resultEl = document.getElementById('gps-latest-result');
+            const errorEl = document.getElementById('gps-latest-error');
+
+            errorEl.classList.add('hidden');
+            resultEl.classList.add('hidden');
+
+            if (!deviceId) {
+                showGpsError(errorEl, "Masukkan Device ID terlebih dahulu.", "amber");
+                return;
+            }
+
+            try {
+                const res = await fetch(`${API_URL}?path=telemetry/gps/latest&device_id=${encodeURIComponent(deviceId)}`);
+                const result = await res.json();
+
+                if (result.ok) {
+                    resultEl.classList.remove('hidden');
+                    document.getElementById('gps-lat').textContent = result.data.lat.toFixed(6);
+                    document.getElementById('gps-lng').textContent = result.data.lng.toFixed(6);
+                    document.getElementById('gps-acc').textContent = result.data.accuracy_m ? Math.round(result.data.accuracy_m) + "m" : "-";
+                    const ts = result.data.ts ? new Date(result.data.ts).toLocaleString('id-ID') : '-';
+                    document.getElementById('gps-latest-ts').textContent = "Tercatat pada " + ts;
+                } else {
+                    showGpsError(errorEl, "Device tidak ditemukan atau belum ada data.", "slate");
+                }
+            } catch (e) {
+                showGpsError(errorEl, "Gagal menghubungi server.", "red");
+            }
+        }
+
+        async function fetchGpsHistory() {
+            const deviceId = document.getElementById('gps-history-device').value.trim();
+            const limit = document.getElementById('gps-history-limit').value || 20;
+            const resultEl = document.getElementById('gps-history-result');
+            const errorEl = document.getElementById('gps-history-error');
+            const tbody = document.getElementById('gps-history-body');
+
+            errorEl.classList.add('hidden');
+            resultEl.classList.add('hidden');
+
+            if (!deviceId) {
+                showGpsError(errorEl, "Masukkan Device ID terlebih dahulu.", "amber");
+                return;
+            }
+
+            try {
+                const res = await fetch(`${API_URL}?path=telemetry/gps/history&device_id=${encodeURIComponent(deviceId)}&limit=${limit}`);
+                const result = await res.json();
+
+                if (result.ok && result.data.items.length > 0) {
+                    resultEl.classList.remove('hidden');
+                    tbody.innerHTML = '';
+                    result.data.items.forEach((item, i) => {
+                        const ts = item.ts ? new Date(item.ts).toLocaleString('id-ID') : '-';
+                        tbody.innerHTML += `
+                            <tr class="hover:bg-slate-50 transition-colors">
+                                <td class="px-4 py-2.5 text-slate-400 font-sans">${i + 1}</td>
+                                <td class="px-4 py-2.5 text-slate-600 font-sans">${ts}</td>
+                                <td class="px-4 py-2.5 text-right text-blue-600">${item.lat.toFixed(6)}</td>
+                                <td class="px-4 py-2.5 text-right text-indigo-600">${item.lng.toFixed(6)}</td>
+                            </tr>
+                        `;
+                    });
+                    document.getElementById('gps-history-count').textContent = `Menampilkan ${result.data.items.length} titik koordinat`;
+                } else {
+                    showGpsError(errorEl, "Tidak ada data riwayat untuk device ini.", "slate");
+                }
+            } catch (e) {
+                showGpsError(errorEl, "Gagal menghubungi server.", "red");
+            }
+        }
+
+        function showGpsError(el, msg, color) {
+            el.classList.remove('hidden');
+            const colors = {
+                amber: "bg-amber-50 text-amber-700 border border-amber-200",
+                slate: "bg-slate-50 text-slate-500 border border-slate-200",
+                red: "bg-red-50 text-red-600 border border-red-200"
+            };
+            el.className = "rounded-xl p-4 text-center text-sm font-semibold " + (colors[color] || colors.slate);
+            el.textContent = msg;
         }
     </script>
 </body>
