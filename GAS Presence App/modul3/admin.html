@@ -56,6 +56,55 @@
         </div>
     </main>
 
+    <!-- Section Get Latest Accelerometer -->
+    <section class="px-6 mb-6 max-w-6xl mx-auto w-full">
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+
+            <div class="flex items-center gap-3 mb-5">
+                <div class="w-10 h-10 bg-cyan-100 text-cyan-600 rounded-xl flex items-center justify-center">
+                    <i class="fas fa-bolt text-lg"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg font-bold text-slate-800">Get Latest Data</h3>
+                    <p class="text-xs text-slate-400 font-medium">Ambil data accelerometer terbaru dari device</p>
+                </div>
+            </div>
+
+            <div class="flex flex-col sm:flex-row gap-3 mb-5">
+                <div class="flex-grow relative">
+                    <i class="fas fa-fingerprint absolute left-4 top-3.5 text-slate-400"></i>
+                    <input type="text" id="latest-device-id" placeholder="Device ID"
+                        class="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-200 transition-all font-mono text-sm">
+                </div>
+                <button onclick="fetchOneShot()"
+                    class="px-8 py-3 bg-cyan-600 text-white font-bold rounded-xl shadow-lg shadow-cyan-500/30 hover:bg-cyan-700 transition-all whitespace-nowrap active:scale-[0.98]">
+                    <i class="fas fa-download mr-2"></i> Ambil Data
+                </button>
+            </div>
+
+            <div id="latest-result" class="hidden rounded-xl border p-5">
+                <div class="grid grid-cols-3 gap-3 text-center mb-3">
+                    <div class="bg-red-50 p-3 rounded-xl border border-red-100">
+                        <div class="text-[10px] font-bold text-red-400 uppercase mb-1">Sumbu X</div>
+                        <div id="latest-x" class="text-xl font-black text-red-600">-</div>
+                    </div>
+                    <div class="bg-emerald-50 p-3 rounded-xl border border-emerald-100">
+                        <div class="text-[10px] font-bold text-emerald-400 uppercase mb-1">Sumbu Y</div>
+                        <div id="latest-y" class="text-xl font-black text-emerald-600">-</div>
+                    </div>
+                    <div class="bg-blue-50 p-3 rounded-xl border border-blue-100">
+                        <div class="text-[10px] font-bold text-blue-400 uppercase mb-1">Sumbu Z</div>
+                        <div id="latest-z" class="text-xl font-black text-blue-600">-</div>
+                    </div>
+                </div>
+                <div id="latest-ts" class="text-center text-xs text-slate-400 font-medium"></div>
+            </div>
+
+            <div id="latest-error" class="hidden rounded-xl p-4 text-center text-sm font-semibold"></div>
+
+        </div>
+    </section>
+
     <script src="../config.js"></script>
     <script>
         // API_URL sudah didefinisikan oleh config.js

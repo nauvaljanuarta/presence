@@ -25,7 +25,7 @@ function doGet(e) {
   const page = e.parameter.page || "";
   // presence
   if (path === "presence/status") return checkStatus(e.parameter);
-
+  // accelerometer
   if (path === "telemetry/accel/latest") return getLatestAccel(e.parameter);
   // GPS
   if (path === "telemetry/gps/latest") return getLatestGps(e.parameter);
