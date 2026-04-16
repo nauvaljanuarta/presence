@@ -1,0 +1,225 @@
+{
+  "info": {
+    "_postman_id": "8c32c9cc-a0f1-4544-a7dc-dabe1ddadf50",
+    "name": "Presence",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "38320050",
+    "_collection_link": "https://go.postman.co/collection/38320050-8c32c9cc-a0f1-4544-a7dc-dabe1ddadf50?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "Generate QR Token",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"course_id\": \"CS101\",\r\n  \"session_id\": \"SESS01\",\r\n  \"timestamp\": \"2026-04-16T20:00:00Z\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{BASE_URL}}?path=presence/qr/generate",
+          "host": [
+            "{{BASE_URL}}"
+          ],
+          "query": [
+            {
+              "key": "path",
+              "value": "presence/qr/generate"
+            }
+          ]
+        },
+        "description": "Generated from cURL: curl -X 'POST' \\\r\n  'https://script.google.com/macros/s/AKfycbwRWRN2Nn3vvDzWNO8IYinc449oZcnyCCC3NJmzqTX0gSnOyFpEzo4Giap3nYEwg39M4g/exec/presence/qr/generate?path=presence%2Fqr%2Fgenerate' \\\r\n  -H 'accept: application/json' \\\r\n  -H 'Content-Type: application/json' \\\r\n  -d '{\r\n  \"course_id\": \"CS101\",\r\n  \"session_id\": \"SESS01\",\r\n  \"timestamp\": \"2024-03-26T00:00:00Z\"\r\n}'"
+      },
+      "response": []
+    },
+    {
+      "name": "Check-in dengan Token QR",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"user_id\": \"MHS001\",\r\n  \"device_id\": \"DEV001\",\r\n  \"qr_token\": \"TKN-C6VRVG\",\r\n  \"timestamp\": \"2026-04-16T20:00:10Z\"\r\n}\r\n",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{BASE_URL}}?path=presence/checkin",
+          "host": [
+            "{{BASE_URL}}"
+          ],
+          "query": [
+            {
+              "key": "path",
+              "value": "presence/checkin"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Cek Status Kehadiran",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{BASE_URL}}?path=presence/status&user_id=MHS001&course_id=CS101&session_id=SESS01",
+          "host": [
+            "{{BASE_URL}}"
+          ],
+          "query": [
+            {
+              "key": "path",
+              "value": "presence/status"
+            },
+            {
+              "key": "user_id",
+              "value": "MHS001"
+            },
+            {
+              "key": "course_id",
+              "value": "CS101"
+            },
+            {
+              "key": "session_id",
+              "value": "SESS01"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Kirim Batch Data Sensor",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"device_id\": \"DEV001\",\r\n  \"samples\": [\r\n    { \"t\": \"2026-04-16T20:01:00Z\", \"x\": 0.12, \"y\": -9.81, \"z\": 0.03 },\r\n    { \"t\": \"2026-04-16T20:01:01Z\", \"x\": 0.15, \"y\": -9.78, \"z\": 0.05 },\r\n    { \"t\": \"2026-04-16T20:01:02Z\", \"x\": 0.18, \"y\": -9.75, \"z\": 0.07 }\r\n  ]\r\n}\r\n",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{BASE_URL}}?path=telemetry/accel",
+          "host": [
+            "{{BASE_URL}}"
+          ],
+          "query": [
+            {
+              "key": "path",
+              "value": "telemetry/accel"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Ambil Data Sensor Terbaru",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{BASE_URL}}?path=telemetry/accel/latest&device_id=DEV001",
+          "host": [
+            "{{BASE_URL}}"
+          ],
+          "query": [
+            {
+              "key": "path",
+              "value": "telemetry/accel/latest"
+            },
+            {
+              "key": "device_id",
+              "value": "DEV001"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Kirim Beberapa Titik GPS",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"device_id\": \"DEV001\",\r\n  \"ts\": \"2026-04-16T20:04:00Z\",\r\n  \"lat\": -7.2762,\r\n  \"lng\": 112.7548,\r\n  \"accuracy_m\": 12\r\n}\r\n",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{BASE_URL}}?path=telemetry/gps",
+          "host": [
+            "{{BASE_URL}}"
+          ],
+          "query": [
+            {
+              "key": "path",
+              "value": "telemetry/gps"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Ambil Lokasi GPS Terbaru",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{BASE_URL}}?path=telemetry/gps/latest&device_id=DEV001",
+          "host": [
+            "{{BASE_URL}}"
+          ],
+          "query": [
+            {
+              "key": "path",
+              "value": "telemetry/gps/latest"
+            },
+            {
+              "key": "device_id",
+              "value": "DEV001"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Ambil Riwayat GPS",
+      "request": {
+        "method": "GET",
+        "header": []
+      },
+      "response": []
+    }
+  ]
+}
